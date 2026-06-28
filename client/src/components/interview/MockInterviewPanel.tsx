@@ -5,6 +5,8 @@ import InterviewQuestion from "./InterviewQuestion";
 import AnswerBox from "./AnswerBox";
 import InterviewControls from "./InterviewControls";
 
+
+
 export default function MockInterviewPanel() {
   const {
     currentQuestion,
@@ -14,16 +16,23 @@ export default function MockInterviewPanel() {
 
   return (
     <div className="space-y-6">
+
+    
       <InterviewProgress
         current={currentStep}
         total={totalQuestions}
+        
       />
+
+     
 
       <InterviewQuestion
         question={
           currentQuestion
         }
+        
       />
+  
 
       <AnswerBox />
 

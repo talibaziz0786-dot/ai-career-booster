@@ -7,11 +7,10 @@ export const registerUser = async (
     password: string;
   }
 ) => {
-  const response =
-    await api.post(
-      "/auth/register",
-      data
-    );
+  const response = await api.post(
+    "/api/auth/register",
+    data
+  );
 
   return response.data;
 };
@@ -22,11 +21,10 @@ export const loginUser = async (
     password: string;
   }
 ) => {
-  const response =
-    await api.post(
-      "/auth/login",
-      data
-    );
+  const response = await api.post(
+    "/api/auth/login",
+    data
+  );
 
   return response.data;
 };
@@ -34,7 +32,9 @@ export const loginUser = async (
 export const getCurrentUser =
   async () => {
     const response =
-      await api.get("/auth/me");
+      await api.get(
+        "/api/auth/me"
+      );
 
     return response.data;
   };

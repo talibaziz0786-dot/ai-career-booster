@@ -16,18 +16,24 @@ export const useThemeStore =
     theme: initialTheme,
 
     toggleTheme: () => {
-      const nextTheme =
-        get().theme === "dark"
-          ? "light"
-          : "dark";
 
-      localStorage.setItem(
-        "theme",
-        nextTheme
-      );
+  const nextTheme =
+    get().theme === "dark"
+      ? "light"
+      : "dark";
 
-      set({
-        theme: nextTheme,
-      });
-    },
+  localStorage.setItem(
+    "theme",
+    nextTheme
+  );
+
+  document.documentElement.classList.toggle(
+    "dark",
+    nextTheme === "dark"
+  );
+
+  set({
+    theme: nextTheme,
+  });
+},
   }));

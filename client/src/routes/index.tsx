@@ -10,6 +10,19 @@ import NotFoundPage from "../pages/NotFoundPage";
 import ProtectedRoute from "./ProtectedRoute";
 import ResumeBuilderPage from "../pages/ResumeBuilderPage";
 import InterviewPrepPage from "../pages/InterviewPrepPage";
+import InterviewResultPage
+from "../pages/InterviewResultPage";
+import InterviewAnalyticsPage
+from "../pages/InterviewAnalyticsPage";
+
+import JobTrackerPage
+from "../pages/JobTrackerPage";
+
+import ProfilePage
+from "../pages/ProfilePage";
+
+import SettingsPage
+from "../pages/SettingsPage";
 
 export const router = createBrowserRouter([
   {
@@ -24,10 +37,7 @@ export const router = createBrowserRouter([
     path: "/register",
     element: <RegisterPage />,
   },
-  {
-    path: "/dashboard",
-    element: <DashboardPage />,
-  },
+ 
   {
     path: "*",
     element: <NotFoundPage />,
@@ -60,6 +70,45 @@ export const router = createBrowserRouter([
   ),
 },
 
+{
+  path: "/interview-result",
+  element: <InterviewResultPage />,
+},
+
+{
+  path: "/analytics",
+  element:
+    <InterviewAnalyticsPage />,
+},
+
+{
+  path: "/jobs",
+  element: (
+    <ProtectedRoute>
+      <JobTrackerPage />
+    </ProtectedRoute>
+  ),
+},
+
+{
+  path: "/profile",
+
+  element: (
+    <ProtectedRoute>
+      <ProfilePage />
+    </ProtectedRoute>
+  ),
+},
+
+{
+  path: "/settings",
+
+  element: (
+    <ProtectedRoute>
+      <SettingsPage />
+    </ProtectedRoute>
+  ),
+},
 
 ]);
 

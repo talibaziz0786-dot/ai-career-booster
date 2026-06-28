@@ -27,7 +27,8 @@ export default function Stats() {
       <div className="mx-auto max-w-6xl px-6">
         <div className="grid gap-6 md:grid-cols-4">
           {stats.map((item) => (
-            <motion.div
+           <motion.div
+  key={item.label}
   whileHover={{
     scale: 1.05,
   }}
@@ -39,10 +40,8 @@ export default function Stats() {
   border
   border-slate-200
   bg-white
-
   dark:border-white/10
   dark:bg-white/5
-
   p-8
   text-center
 "

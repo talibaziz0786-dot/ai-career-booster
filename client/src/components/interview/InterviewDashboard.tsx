@@ -1,77 +1,66 @@
 import InterviewStats from "./InterviewStats";
-import InterviewCategoryCard from "./InterviewCategoryCard";
 import RecentInterviewCard from "./RecentInterviewCard";
 import CareerInsightsCard from "./CareerInsightsCard";
+import ResumeSkillsCard from "./ResumeSkillsCard";
+
+import {
+  useDashboardStats,
+} from "../../hooks/useDashboardStats";
 
 export default function InterviewDashboard() {
+
+  const stats =
+    useDashboardStats();
+
   return (
     <div className="space-y-8">
 
+      {/* Stats */}
       <div
         className="
         grid
         gap-6
-
         md:grid-cols-2
         xl:grid-cols-4
         "
       >
         <InterviewStats
           title="Total Interviews"
-          value="24"
+          value={
+            stats.totalInterviews.toString()
+          }
         />
 
         <InterviewStats
           title="Average Score"
-          value="82%"
+          value={
+            `${stats.averageScore}%`
+          }
         />
 
         <InterviewStats
-          title="Strong Areas"
-          value="React"
+          title="Strong Area"
+          value={
+            stats.strongestArea
+          }
         />
 
         <InterviewStats
-          title="Weak Areas"
-          value="DSA"
+          title="Weak Area"
+          value={
+            stats.weakestArea
+          }
         />
       </div>
 
+      {/* Resume Skills */}
+      <ResumeSkillsCard />
+
+      {/* Bottom Cards */}
       <div
         className="
         grid
         gap-6
-
-        md:grid-cols-2
-        xl:grid-cols-4
-        "
-      >
-        <InterviewCategoryCard
-          title="React"
-          questions={120}
-        />
-
-        <InterviewCategoryCard
-          title="JavaScript"
-          questions={160}
-        />
-
-        <InterviewCategoryCard
-          title="HR"
-          questions={90}
-        />
-
-        <InterviewCategoryCard
-          title="Node.js"
-          questions={130}
-        />
-      </div>
-
-      <div
-        className="
-        grid
-        gap-6
-
         lg:grid-cols-2
         "
       >
@@ -79,6 +68,7 @@ export default function InterviewDashboard() {
 
         <CareerInsightsCard />
       </div>
+
     </div>
   );
 }

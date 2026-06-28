@@ -7,7 +7,7 @@ import {
 } from "../controllers/auth.controller";
 
 import {
-  protect,
+  authMiddleware,
 } from "../middleware/auth.middleware";
 
 const router = Router();
@@ -24,7 +24,7 @@ router.post(
 
 router.get(
   "/me",
-  protect,
+  authMiddleware,
   getMe
 );
 

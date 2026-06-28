@@ -128,38 +128,69 @@ dark:hover:bg-white/10"
 
 
 
-        <button
-          type="button"
-          aria-label="Job Tracker"
-          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-slate-900
-dark:text-white hover:bg-slate-100
-dark:hover:bg-white/10"
-        >
-          <Briefcase size={18} />
-          Job Tracker
-        </button>
+       <Link
+  to="/jobs"
+  onClick={closeSidebar}
+  className="
+  flex
+  w-full
+  items-center
+  gap-3
+  rounded-xl
+  px-4
+  py-3
+  text-slate-900
+  hover:bg-slate-100
+  dark:text-white
+  dark:hover:bg-white/10
+  "
+>
+  <Briefcase size={18} />
+  Job Tracker
+</Link>
 
-        <button
-          type="button"
-          aria-label="Profile"
-          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-slate-900
-dark:text-white hover:bg-slate-100
-dark:hover:bg-white/10"
-        >
-          <User size={18} />
-          Profile
-        </button>
+        <Link
+  to="/profile"
+  onClick={closeSidebar}
+  className="
+  flex
+  w-full
+  items-center
+  gap-3
+  rounded-xl
+  px-4
+  py-3
+  text-slate-900
+  hover:bg-slate-100
+  dark:text-white
+  dark:hover:bg-white/10
+  "
+>
+  <User size={18} />
+  Profile
+</Link>
 
-        <button
-          type="button"
-          aria-label="Settings"
-          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-slate-900
-dark:text-white hover:bg-slate-100
-dark:hover:bg-white/10"
-        >
-          <Settings size={18} />
-          Settings
-        </button>
+        <Link
+  to="/settings"
+  onClick={closeSidebar}
+  className="
+  flex
+  w-full
+  items-center
+  gap-3
+  rounded-xl
+  px-4
+  py-3
+  text-slate-900
+  hover:bg-slate-100
+  dark:text-white
+  dark:hover:bg-white/10
+  "
+>
+  <Settings size={18} />
+  Settings
+</Link>
+
       </nav>
     </aside>
   );

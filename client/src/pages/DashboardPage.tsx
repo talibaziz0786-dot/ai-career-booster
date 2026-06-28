@@ -7,10 +7,10 @@ import ResumeStatsChart from "../components/dashboard/ResumeStatsChart";
 import RecentActivity from "../components/dashboard/RecentActivity";
 import JobTrackerWidget from "../components/dashboard/JobTrackerWidget";
 import ProfileCompletion from "../components/dashboard/ProfileCompletion";
-import {
-  useDashboardStore,
-} from "../store/dashboard-store";
+import { useDashboardStore, } from "../store/dashboard-store";
 import { useAuthStore } from "../store/auth-store";
+import JobStatsCard from "../components/dashboard/JobStatsCard";
+
 
 
 export default function DashboardPage() {
@@ -31,6 +31,7 @@ const closeSidebar =
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
+      
       <DashboardSidebar />
 
       {
@@ -64,7 +65,7 @@ const closeSidebar =
         <div className="mt-8 grid gap-6 lg:grid-cols-3">
           <ProfileCompletion />
           <RecentActivity />
-          <JobTrackerWidget />
+          <JobStatsCard />
         </div>
       </main>
     </div>

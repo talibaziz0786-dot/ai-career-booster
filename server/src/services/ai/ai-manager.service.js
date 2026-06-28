@@ -1,36 +1,35 @@
-import { askGemini }
-from "./gemini.service.js";
+import {
+  askGemini,
+} from "./gemini.service.js";
 
-import { askDeepSeek }
-from "./deepseek.service.js";
+import {
+  askDeepSeek,
+} from "./deepseek.service.js";
 
-import { askQwen }
-from "./qwen.service.js";
+import {
+  askQwen,
+} from "./qwen.service.js";
 
-import { localAI }
-from "./local-ai.service.js";
+import {
+  localAI,
+} from "./local-ai.service.js";
 
 export async function askAI(
   prompt
 ) {
-
   try {
+    console.log("Using Gemini");
 
-    console.log(
-      "Using Gemini"
-    );
+    const result =
+      await askGemini(prompt);
 
-    return await askGemini(
-      prompt
-    );
-
+    return {
+      provider: "gemini",
+      content: result,
+    };
   }
 
-  catch (error) {
-
-    console.log(
-      "Gemini Failed"
-    );
+  catch {
 
     try {
 
@@ -38,9 +37,16 @@ export async function askAI(
         "Using DeepSeek"
       );
 
-      return await askDeepSeek(
-        prompt
-      );
+      const result =
+        await askDeepSeek(
+          prompt
+        );
+
+      return {
+        provider:
+          "deepseek",
+        content: result,
+      };
 
     }
 
@@ -52,9 +58,16 @@ export async function askAI(
           "Using Qwen"
         );
 
-        return await askQwen(
-          prompt
-        );
+        const result =
+          await askQwen(
+            prompt
+          );
+
+        return {
+          provider:
+            "qwen",
+          content: result,
+        };
 
       }
 
@@ -64,16 +77,18 @@ export async function askAI(
           "Using Local AI"
         );
 
-        return await localAI(
-          prompt
-        );
+        const result =
+          await localAI(
+            prompt
+          );
+
+        return {
+          provider:
+            "local",
+          content: result,
+        };
 
       }
-
-      return {
-  provider: "gemini",
-  content: result,
-};
 
     }
 
