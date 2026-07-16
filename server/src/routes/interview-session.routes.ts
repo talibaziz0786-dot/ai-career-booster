@@ -3,11 +3,11 @@ import express from "express";
 import {
   saveInterview,
   getMyInterviews,
-} from "../controllers/interview-session.controller";
+} from "../controllers/interview-session.controller.js";
 
 import {
   authMiddleware,
-} from "../middleware/auth.middleware";
+} from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 

@@ -1,8 +1,9 @@
 import bcrypt from "bcryptjs";
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 
-import { User } from "../models/user.model";
-import { generateToken } from "../utils/generateToken";
+import { User } from "../models/user.model.js";
+import { generateToken } from "../utils/generateToken.js";
+import Subscription from "../models/subscription.model.js";
 
 export const registerUser = async (
   req: Request,
@@ -28,6 +29,15 @@ export const registerUser = async (
       email,
       password: hashedPassword,
     });
+
+    const subscription =
+  await Subscription.create({
+    user: user._id,
+  });
+
+user.subscription = subscription._id;
+
+await user.save();
 
     res.status(201).json({
       user: {

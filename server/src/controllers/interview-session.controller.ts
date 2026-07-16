@@ -1,24 +1,22 @@
-import { Response } from "express";
+import type { Response } from "express";
 
 import InterviewSession
-from "../models/Interview-Session.model";
+from "../models/interview-session.model.js";
 
-import {
+import type {
   AuthRequest,
-} from "../middleware/auth.middleware";
+} from "../middleware/auth.middleware.js";
 
 export const saveInterview =
 async (
   req: AuthRequest,
   res: Response
 ) => {
-
   try {
 
     const session =
       await InterviewSession.create({
-        user:
-          req.user?._id,
+        user: req.user?.id,
 
         ...req.body,
       });
@@ -37,7 +35,6 @@ async (
     });
 
   }
-
 };
 
 export const getMyInterviews =
@@ -45,18 +42,14 @@ async (
   req: AuthRequest,
   res: Response
 ) => {
-
   try {
 
     const sessions =
-      await InterviewSession
-        .find({
-          user:
-            req.user?._id,
-        })
-        .sort({
-          createdAt: -1,
-        });
+      await InterviewSession.find({
+        user: req.user?.id,
+      }).sort({
+        createdAt: -1,
+      });
 
     res.json({
       success: true,
@@ -72,5 +65,4 @@ async (
     });
 
   }
-
 };

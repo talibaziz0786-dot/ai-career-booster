@@ -1,10 +1,10 @@
 import JobApplication
-from "../models/JobApplication.model";
+from "../models/JobApplication.model.js";
 
 import {
   AuthRequest,
 }
-from "../middleware/auth.middleware";
+from "../middleware/auth.middleware.js";
 
 import { Response }
 from "express";
@@ -21,7 +21,7 @@ async (
       await JobApplication.create({
 
         user:
-          req.user?._id,
+          req.user?.id,
 
         company:
           req.body.company,
@@ -64,7 +64,7 @@ async (
     const jobs =
       await JobApplication.find({
         user:
-          req.user?._id,
+          req.user?.id,
       });
 
     res.json({
@@ -95,7 +95,7 @@ async (
     const job =
       await JobApplication.findOneAndDelete({
         _id: req.params.id,
-        user: req.user?._id,
+        user: req.user?.id,
       });
 
     if (!job) {
@@ -133,7 +133,7 @@ async (
       await JobApplication.findOneAndUpdate(
         {
           _id: req.params.id,
-          user: req.user?._id,
+          user: req.user?.id,
         },
         req.body,
         {

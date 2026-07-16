@@ -7,6 +7,8 @@ import { useEffect } from "react";
 import { api } from "../lib/axios";
 import InterviewResultPage
 from "./InterviewResultPage";
+import UpgradeModal from "../components/subscription/UpgradeModal";
+import useInterviewAI from "../hooks/useInterviewAI";
 
 
 export default function InterviewPrepPage() {
@@ -26,6 +28,11 @@ const setResumeSkills =
   useInterviewStore(
     (state) => state.interviewResult
   );
+
+
+  const {
+  upgradeRequired,
+} = useInterviewAI();
 
  const {
   interviewStarted,
@@ -378,6 +385,11 @@ console.log(
     </>
   )
 }
+
+<UpgradeModal
+  open={upgradeRequired}
+  onClose={() => {}}
+/>
 
 </div>
 );

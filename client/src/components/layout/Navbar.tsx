@@ -57,19 +57,33 @@ export default function Navbar() {
               Home
             </Link>
 
-            <a
-              href="#features"
-              className="text-slate-700 dark:text-slate-300"
-            >
-              Features
-            </a>
+           <button
+  type="button"
+  onClick={() => {
+    document
+      .getElementById("features")
+      ?.scrollIntoView({
+        behavior: "smooth",
+      });
+  }}
+  className="text-slate-700 dark:text-slate-300"
+>
+  Features
+</button>
 
-            <a
-              href="#pricing"
-              className="text-slate-700 dark:text-slate-300"
-            >
-              Pricing
-            </a>
+<button
+  type="button"
+  onClick={() => {
+    document
+      .getElementById("pricing")
+      ?.scrollIntoView({
+        behavior: "smooth",
+      });
+  }}
+  className="text-slate-700 dark:text-slate-300"
+>
+  Pricing
+</button>
 
            
           </nav>
@@ -165,6 +179,38 @@ export default function Navbar() {
       >
         Home
       </Link>
+
+      <button
+  type="button"
+  onClick={() => {
+    setIsOpen(false);
+
+    document
+      .getElementById("features")
+      ?.scrollIntoView({
+        behavior: "smooth",
+      });
+  }}
+  className="text-left text-white"
+>
+  Features
+</button>
+
+<button
+  type="button"
+  onClick={() => {
+    setIsOpen(false);
+
+    document
+      .getElementById("pricing")
+      ?.scrollIntoView({
+        behavior: "smooth",
+      });
+  }}
+  className="text-left text-white"
+>
+  Pricing
+</button>
 
       <Link
         to="/login"

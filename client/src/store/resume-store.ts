@@ -25,6 +25,18 @@ export interface ResumeData {
   languages: string;
 }
 
+export interface ResumeVersion {
+
+  _id: string;
+
+  title: string;
+
+  version: number;
+
+  updatedAt: string;
+
+}
+
 export type ResumeTemplate =
   | "modern"
   | "corporate"
@@ -35,15 +47,35 @@ interface ResumeStore {
 
   selectedTemplate: ResumeTemplate;
 
+  resumeList: ResumeVersion[];
+
+  lastSaved: number;
+
+setLastSaved: () => void;
+
+setResumeList: (
+resumes: ResumeVersion[]
+) => void;
+
   updateData: (
     values: Partial<ResumeData>
   ) => void;
+
+  loadResume: (
+  values: Partial<ResumeData>
+) => void;
 
   setTemplate: (
     template: ResumeTemplate
   ) => void;
 
   resetResume: () => void;
+
+  aiResume: ResumeData | null;
+
+setAIResume: (
+  resume: ResumeData
+) => void;
 }
 
 const initialData: ResumeData = {
@@ -86,12 +118,36 @@ export const useResumeStore =
       ) as ResumeTemplate) ||
       "modern",
 
+      aiResume: null,
+
+setAIResume: (resume) =>
+  set({
+    aiResume: resume,
+  }),
+
+
+  resumeList: [],
+
+setResumeList: (resumes) =>
+  set({
+    resumeList: resumes,
+  }),
+
+  lastSaved: Date.now(),
+
+setLastSaved: () =>
+  set({
+    lastSaved: Date.now(),
+  }),
+
     updateData: (values) =>
       set((state) => {
         const updated = {
           ...state.data,
           ...values,
         };
+
+   
 
         localStorage.setItem(
           "resume-data",
@@ -102,6 +158,25 @@ export const useResumeStore =
           data: updated,
         };
       }),
+
+           loadResume: (values) =>
+  set(() => {
+    const updated = {
+      ...initialData,
+      ...values,
+    };
+
+    localStorage.setItem(
+      "resume-data",
+      JSON.stringify(updated)
+    );
+
+    return {
+      data: updated,
+    };
+  }),
+
+     
 
     setTemplate: (template) => {
       localStorage.setItem(
@@ -130,4 +205,6 @@ export const useResumeStore =
           "modern",
       });
     },
+
+    
   }));

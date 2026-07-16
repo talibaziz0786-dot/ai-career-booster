@@ -1,26 +1,42 @@
 import { useResumeStore } from "../../../store/resume-store";
 
 export default function CorporateTemplate() {
-  const { data } = useResumeStore();
+  const {
+  data,
+  aiResume,
+} = useResumeStore();
 
-  return (
+const resume =
+  aiResume ?? data;
+
+  
+ return (
+  <div className="flex justify-center py-10">
     <div
-      id="resume-template"
-      className="min-h-[1123px] bg-white text-slate-900"
-    >
+id="resume-template"
+className="
+w-[794px]
+min-h-[1123px]
+overflow-hidden
+mx-auto
+rounded-md
+bg-white
+shadow-2xl
+"
+>
       {/* Header */}
       <div className="bg-slate-900 p-10 text-white">
         <h1 className="text-5xl font-black">
-          {data.fullName}
+          {resume.fullName}
         </h1>
 
         <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-          <p>{data.email}</p>
-          <p>{data.phone}</p>
-          <p>{data.location}</p>
-          <p>{data.linkedin}</p>
-          <p>{data.github}</p>
-          <p>{data.portfolio}</p>
+          <p>{resume.email}</p>
+          <p>{resume.phone}</p>
+          <p>{resume.location}</p>
+          <p>{resume.linkedin}</p>
+          <p>{resume.github}</p>
+          <p>{resume.portfolio}</p>
         </div>
       </div>
 
@@ -35,7 +51,7 @@ export default function CorporateTemplate() {
               Skills
             </h2>
 
-            <p>{data.skills}</p>
+            <p>{resume.skills}</p>
           </div>
 
           <div>
@@ -43,7 +59,7 @@ export default function CorporateTemplate() {
               Certifications
             </h2>
 
-            <p>{data.certifications}</p>
+            <p>{resume.certifications}</p>
           </div>
 
           <div>
@@ -51,7 +67,7 @@ export default function CorporateTemplate() {
               Languages
             </h2>
 
-            <p>{data.languages}</p>
+            <p>{resume.languages}</p>
           </div>
         </div>
 
@@ -63,7 +79,7 @@ export default function CorporateTemplate() {
               Professional Summary
             </h2>
 
-            <p>{data.summary}</p>
+            <p>{resume.summary}</p>
           </div>
 
           <div>
@@ -71,7 +87,7 @@ export default function CorporateTemplate() {
               Experience
             </h2>
 
-            <p>{data.experience}</p>
+            <p>{resume.experience}</p>
           </div>
 
           <div>
@@ -79,7 +95,7 @@ export default function CorporateTemplate() {
               Projects
             </h2>
 
-            <p>{data.projects}</p>
+            <p>{resume.projects}</p>
           </div>
 
           <div>
@@ -87,7 +103,7 @@ export default function CorporateTemplate() {
               Education
             </h2>
 
-            <p>{data.education}</p>
+            <p>{resume.education}</p>
           </div>
 
           <div>
@@ -95,11 +111,12 @@ export default function CorporateTemplate() {
               Achievements
             </h2>
 
-            <p>{data.achievements}</p>
+            <p>{resume.achievements}</p>
           </div>
 
         </div>
       </div>
+    </div>
     </div>
   );
 }

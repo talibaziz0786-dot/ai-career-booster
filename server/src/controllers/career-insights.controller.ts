@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { askAI } from "../services/ai/ai-manager.service.js";
 
 export const getCareerInsights = async (

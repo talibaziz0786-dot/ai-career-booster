@@ -1,5 +1,5 @@
-import { Request, Response } from "express";
-import InterviewSession from "../models/Interview-Session.model.js";
+import type { Request, Response } from "express";
+import InterviewSession from "../models/interview-session.model.js";
 
 export const getDashboardStats =
 async (

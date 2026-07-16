@@ -1,8 +1,21 @@
 import HeroMockup from "./HeroMockup";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import DemoVideoModal from "../ui/DemoVideoModal";
+import { useAuthStore } from "../../store/auth-store";
 
 
 export default function Hero() {
+  const navigate = useNavigate();
+
+const isAuthenticated =
+  useAuthStore(
+    (state) => state.isAuthenticated
+  );
+const [openDemo, setOpenDemo] =
+  useState(false);
+
   return (
             <section
 className="
@@ -77,11 +90,22 @@ dark:to-slate-900
         </p>
 
         <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
-          <button className="rounded-2xl bg-blue-600 px-8 py-4 font-semibold text-white">
-            Build Resume Free
-          </button>
+          <button
+  onClick={() => {
+    if (isAuthenticated) {
+      navigate("/resume-builder");
+    } else {
+      navigate("/register");
+    }
+  }}
+  className="rounded-2xl bg-blue-600 px-8 py-4 font-semibold text-white"
+>
+  Build Resume Free
+</button>
 
-          <button className="
+         <button
+  onClick={() => setOpenDemo(true)}
+  className="
 rounded-2xl
 border
 border-slate-300
@@ -93,13 +117,19 @@ shadow-lg
 dark:border-white/10
 dark:bg-white/5
 dark:text-white
-">
-            Watch Demo
-          </button>
+"
+>
+  Watch Demo
+</button>
         </div>
 
         <HeroMockup />
       </div>
+
+      <DemoVideoModal
+  open={openDemo}
+  onClose={() => setOpenDemo(false)}
+/>
     </section>
   );
 }

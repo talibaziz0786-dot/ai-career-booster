@@ -8,14 +8,14 @@ import {
   updateJob,
   deleteJob,
 }
-from "../controllers/job.controller";
+from "../controllers/job.controller.js";
 
 
 
 import {
   authMiddleware,
 }
-from "../middleware/auth.middleware";
+from "../middleware/auth.middleware.js";
 
 const router =
   Router();

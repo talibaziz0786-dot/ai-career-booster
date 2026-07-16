@@ -1,27 +1,37 @@
 import { useResumeStore } from "../../../store/resume-store";
 
 export default function MinimalTemplate() {
-  const { data } = useResumeStore();
+  const {
+  data,
+  aiResume,
+} = useResumeStore();
 
-  return (
-    <div
-      id="resume-template"
-      className="
-      min-h-[1123px]
-      bg-white
-      p-14
-      text-slate-900
-      "
-    >
+const resume =
+  aiResume ?? data;
+
+ return (
+  <div className="flex justify-center py-10">
+   <div
+id="resume-template"
+className="
+w-[794px]
+min-h-[1123px]
+mx-auto
+overflow-hidden
+rounded-md
+bg-white
+shadow-2xl
+"
+>
       <div className="border-b pb-6">
         <h1 className="text-5xl font-bold">
-          {data.fullName}
+          {resume.fullName}
         </h1>
 
         <div className="mt-4 flex flex-wrap gap-5 text-sm text-slate-600">
-          <span>{data.email}</span>
-          <span>{data.phone}</span>
-          <span>{data.location}</span>
+          <span>{resume.email}</span>
+          <span>{resume.phone}</span>
+          <span>{resume.location}</span>
         </div>
       </div>
 
@@ -31,7 +41,7 @@ export default function MinimalTemplate() {
         </h2>
 
         <p className="mt-3">
-          {data.summary}
+          {resume.summary}
         </p>
       </section>
 
@@ -41,7 +51,7 @@ export default function MinimalTemplate() {
         </h2>
 
         <p className="mt-3">
-          {data.skills}
+          {resume.skills}
         </p>
       </section>
 
@@ -51,7 +61,7 @@ export default function MinimalTemplate() {
         </h2>
 
         <p className="mt-3">
-          {data.experience}
+          {resume.experience}
         </p>
       </section>
 
@@ -61,7 +71,7 @@ export default function MinimalTemplate() {
         </h2>
 
         <p className="mt-3">
-          {data.projects}
+          {resume.projects}
         </p>
       </section>
 
@@ -71,7 +81,7 @@ export default function MinimalTemplate() {
         </h2>
 
         <p className="mt-3">
-          {data.education}
+          {resume.education}
         </p>
       </section>
 
@@ -81,7 +91,7 @@ export default function MinimalTemplate() {
         </h2>
 
         <p className="mt-3">
-          {data.certifications}
+          {resume.certifications}
         </p>
       </section>
 
@@ -91,9 +101,10 @@ export default function MinimalTemplate() {
         </h2>
 
         <p className="mt-3">
-          {data.achievements}
+          {resume.achievements}
         </p>
       </section>
+    </div>
     </div>
   );
 }

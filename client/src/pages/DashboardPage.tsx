@@ -10,7 +10,10 @@ import ProfileCompletion from "../components/dashboard/ProfileCompletion";
 import { useDashboardStore, } from "../store/dashboard-store";
 import { useAuthStore } from "../store/auth-store";
 import JobStatsCard from "../components/dashboard/JobStatsCard";
-
+import SubscriptionCard
+from "../components/dashboard/SubscriptionCard";
+import UsageInitializer from "../components/dashboard/UsageInitializer";
+import UsageCard from "../components/dashboard/UsageCard";
 
 
 export default function DashboardPage() {
@@ -51,10 +54,16 @@ const closeSidebar =
 }
 
       <main className="flex-1 p-6">
+
+        <UsageInitializer />
         <DashboardHeader name={user?.name} />
 
         <div className="mt-8">
           <AnalyticsCards />
+
+<div className="mt-8">
+  <UsageCard />
+</div>
         </div>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
@@ -64,8 +73,10 @@ const closeSidebar =
 
         <div className="mt-8 grid gap-6 lg:grid-cols-3">
           <ProfileCompletion />
-          <RecentActivity />
-          <JobStatsCard />
+
+<SubscriptionCard />
+
+<JobStatsCard />
         </div>
       </main>
     </div>

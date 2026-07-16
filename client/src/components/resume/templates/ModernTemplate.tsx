@@ -1,27 +1,42 @@
 import { useResumeStore } from "../../../store/resume-store";
 
 export default function ModernTemplate() {
-  const { data } = useResumeStore();
+ const {
+  data,
+  aiResume,
+} = useResumeStore();
 
-  const skills =
-    data.skills?.split(",") || [];
+const resume =
+  aiResume ?? data;
 
-  return (
+ const skills =
+  resume.skills
+    ?.split(",")
+    .map((skill: string) =>
+      skill.trim()
+    ) || [];
+
+ return (
+  <div className="flex justify-center py-10">
     <div
       id="resume-template"
       className="
+      w-[794px]
       min-h-[1123px]
+      mx-auto
       bg-white
-      text-slate-900
+      overflow-hidden
+      rounded-md
+      shadow-2xl
       "
-    >
+>
       {/* Header */}
 
       <div className="bg-cyan-600 p-8 text-white">
         <div className="flex items-center gap-6">
-          {data.photo && (
+          {resume.photo && (
             <img
-              src={data.photo}
+              src={resume.photo}
               alt="Profile"
               className="
               h-28
@@ -36,13 +51,13 @@ export default function ModernTemplate() {
 
           <div>
             <h1 className="text-5xl font-black">
-              {data.fullName ||
+              {resume.fullName ||
                 "Your Name"}
             </h1>
 
-           {data.jobTitle && (
+           {resume.jobTitle && (
   <p className="mt-2 text-xl text-white font-semibold">
-    {data.jobTitle}
+    {resume.jobTitle}
   </p>
 )}
           </div>
@@ -60,17 +75,17 @@ export default function ModernTemplate() {
           </h3>
 
           <div className="space-y-2 text-sm">
-            <p>{data.email}</p>
+            <p>{resume.email}</p>
 
-            <p>{data.phone}</p>
+            <p>{resume.phone}</p>
 
-            <p>{data.location}</p>
+            <p>{resume.location}</p>
 
-            <p>{data.linkedin}</p>
+            <p>{resume.linkedin}</p>
 
-            <p>{data.github}</p>
+            <p>{resume.github}</p>
 
-            <p>{data.portfolio}</p>
+            <p>{resume.portfolio}</p>
           </div>
 
           {/* Skills */}
@@ -107,7 +122,7 @@ export default function ModernTemplate() {
               Languages
             </h3>
 
-            <p>{data.languages}</p>
+            <p>{resume.languages}</p>
           </div>
 
           {/* Certifications */}
@@ -117,7 +132,7 @@ export default function ModernTemplate() {
               Certifications
             </h3>
 
-            <p>{data.certifications}</p>
+            <p>{resume.certifications}</p>
           </div>
         </div>
 
@@ -141,7 +156,7 @@ export default function ModernTemplate() {
             </h2>
 
             <p className="mt-4">
-              {data.summary}
+              {resume.summary}
             </p>
           </section>
 
@@ -162,7 +177,7 @@ export default function ModernTemplate() {
             </h2>
 
             <p className="mt-4">
-              {data.experience}
+              {resume.experience}
             </p>
           </section>
 
@@ -183,7 +198,7 @@ export default function ModernTemplate() {
             </h2>
 
             <p className="mt-4">
-              {data.projects}
+              {resume.projects}
             </p>
           </section>
 
@@ -204,7 +219,7 @@ export default function ModernTemplate() {
             </h2>
 
             <p className="mt-4">
-              {data.education}
+              {resume.education}
             </p>
           </section>
 
@@ -225,11 +240,12 @@ export default function ModernTemplate() {
             </h2>
 
             <p className="mt-4">
-              {data.achievements}
+              {resume.achievements}
             </p>
           </section>
         </div>
       </div>
+    </div>
     </div>
   );
 }

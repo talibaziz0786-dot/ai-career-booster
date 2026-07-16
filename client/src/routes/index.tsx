@@ -24,6 +24,9 @@ from "../pages/ProfilePage";
 import SettingsPage
 from "../pages/SettingsPage";
 
+import SubscriptionPage from "../pages/SubscriptionPage";
+import BillingPage from "../pages/BillingPage";
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -106,6 +109,46 @@ export const router = createBrowserRouter([
   element: (
     <ProtectedRoute>
       <SettingsPage />
+    </ProtectedRoute>
+  ),
+},
+
+{
+  path: "/subscription",
+
+  element: (
+    <ProtectedRoute>
+      <SubscriptionPage />
+    </ProtectedRoute>
+  ),
+},
+
+{
+  path: "/billing",
+
+  element: (
+    <ProtectedRoute>
+      <BillingPage />
+    </ProtectedRoute>
+  ),
+},
+
+{
+  path: "/subscription",
+  element: (
+    <ProtectedRoute>
+      <SubscriptionPage />
+    </ProtectedRoute>
+  ),
+},
+
+{
+  path: "/billing",
+  element: (
+    <ProtectedRoute>
+      <div className="flex min-h-screen items-center justify-center text-4xl font-bold">
+        Billing Page Coming Soon
+      </div>
     </ProtectedRoute>
   ),
 },

@@ -1,6 +1,7 @@
 import SectionHeading from "../common/SectionHeading";
 import { motion } from "framer-motion";
-
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../../store/auth-store";
 
 const plans = [
   {
@@ -24,10 +25,13 @@ const plans = [
 ];
 
 export default function Pricing() {
+  const navigate = useNavigate();
+
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   return (
-    <section className="py-32">
+    <section id="pricing" className="py-32">
       <div className="mx-auto max-w-7xl px-6">
-        <SectionHeading 
+        <SectionHeading
           badge="Pricing"
           title="Choose Your Plan"
           description="Start free and upgrade when you're ready."
@@ -36,18 +40,20 @@ export default function Pricing() {
         <div className="mt-20 grid gap-8 md:grid-cols-2 ">
           {plans.map((plan) => (
             <motion.div
-  whileHover={{
-    y: -10,
-    scale: 1.02,
-  }}
-  transition={{
-    duration: 0.2,
-  }}
+              whileHover={{
+                y: -10,
+                scale: 1.02,
+              }}
+              transition={{
+                duration: 0.2,
+              }}
               key={plan.name}
               className={`relative rounded-3xl border p-10 backdrop-blur-xl ${
                 plan.popular
-                  ? "border-cyan-500 bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-500/10 dark:to-blue-500/10"   : "border-slate-200 bg-white shadow-xl dark:border-white/10 dark:bg-white/5"
-              }`} >
+                  ? "border-cyan-500 bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-500/10 dark:to-blue-500/10"
+                  : "border-slate-200 bg-white shadow-xl dark:border-white/10 dark:bg-white/5"
+              }`}
+            >
               {plan.popular && (
                 <span className="absolute right-6 top-6 rounded-full bg-cyan-500 px-3 py-1 text-xs font-bold text-white">
                   MOST POPULAR
@@ -85,9 +91,17 @@ export default function Pricing() {
 
               <button
                 type="button"
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    navigate("/register");
+                    return;
+                  }
+
+                  navigate("/subscription");
+                }}
                 className="mt-10 w-full rounded-2xl bg-cyan-500 py-4 font-semibold text-white"
               >
-                Get Started
+                {plan.name === "Free" ? "Start Free" : "Upgrade Now"}
               </button>
             </motion.div>
           ))}

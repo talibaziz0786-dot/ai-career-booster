@@ -1,4 +1,4 @@
-import {
+import type {
   Request,
   Response,
   NextFunction,
@@ -7,17 +7,20 @@ import {
 import jwt from "jsonwebtoken";
 
 import { User }
-from "../models/user.model";
+from "../models/user.model.js";
+
 
 interface JwtPayload {
   id: string;
 }
 
-export interface AuthRequest
-  extends Request {
-
-  user?: any;
+export interface AuthRequest extends Request {
+  user?: {
+    id: string;
+    role?: string;
+  };
 }
+
 
 export const authMiddleware =
 async (
@@ -48,7 +51,7 @@ async (
     const token =
       authHeader.split(" ")[1];
 
-console.log("TOKEN:", token);
+// console.log("TOKEN:", token);
    console.log("JWT_SECRET:", process.env.JWT_SECRET);
 
     const decoded =
@@ -57,7 +60,7 @@ jwt.verify(
         process.env.JWT_SECRET!
       ) as JwtPayload;
 
-      console.log("DECODED:", decoded);
+      // console.log("DECODED:", decoded);
 
     const user =
       await User.findById(
