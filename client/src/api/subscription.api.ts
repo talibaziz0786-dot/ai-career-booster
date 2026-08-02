@@ -1,22 +1,8 @@
-import axios from "axios";
+import { createApiClient } from "../lib/api-client";
 
-const API =
-  import.meta.env.VITE_API_URL ??
-  "http://localhost:5000/api";
-
-const subscriptionApi = axios.create({
-  baseURL: `${API}/subscription`,
-});
-
-subscriptionApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
-});
+const subscriptionApi = createApiClient(
+  "/api/subscription"
+);
 
 export interface SubscriptionData {
   plan: "free" | "trial" | "pro-monthly" | "pro-yearly";

@@ -1,8 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import AuthLayout from "../components/auth/AuthLayout";
-import toast from "react-hot-toast";
 
 import {
   useForm,
@@ -23,20 +20,15 @@ import {
   registerUser,
 } from "../services/auth.service";
 
-import {
-  useAuthStore,
-} from "../store/auth-store";
+import { useAuthSubmit } from "../hooks/useAuthSubmit";
 
 export default function RegisterPage() {
-  const navigate = useNavigate();
-
-  const login =
-    useAuthStore(
-      (state) => state.login
-    );
-
-  const [loading, setLoading] =
-    useState(false);
+  const { loading, onSubmit } =
+    useAuthSubmit<RegisterInput>({
+      request: registerUser,
+      successMessage: "Account created",
+      errorMessage: "Registration failed",
+    });
 
   const {
     register,
@@ -48,40 +40,6 @@ export default function RegisterPage() {
         registerSchema
       ),
   });
-
-  const onSubmit = async (
-    data: RegisterInput
-  ) => {
-    try {
-      setLoading(true);
-
-      const response =
-        await registerUser(
-          data
-        );
-
-      login(
-        response.user,
-        response.token
-      );
-
-      toast.success(
-        "Account created"
-      );
-
-      navigate(
-        "/dashboard"
-      );
-    } catch (error: any) {
-      toast.error(
-        error?.response?.data
-          ?.message ||
-          "Registration failed"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
       <AuthLayout

@@ -1,22 +1,8 @@
-import axios from "axios";
+import { createApiClient } from "../lib/api-client";
 
-const API =
-  import.meta.env.VITE_API_URL ??
-  "http://localhost:5000";
-
-const interviewApi = axios.create({
-  baseURL: `${API}/api/ai/interview`,
-});
-
-interviewApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
-});
+const interviewApi = createApiClient(
+  "/api/ai/interview"
+);
 
 export interface InterviewRequest {
   role: string;

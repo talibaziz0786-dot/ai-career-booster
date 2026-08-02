@@ -1,25 +1,13 @@
-export function parseAIJson(
+import { parseAIJson as parseJson } from "../services/ai/core/ai-parser.js";
+
+export function parseAIJson<T = any>(
   content?: string | null
-) {
+): T {
   if (!content) {
     throw new Error(
       "AI returned empty response."
     );
   }
 
-  const cleaned = content
-    .replace(/```json/g, "")
-    .replace(/```/g, "")
-    .trim();
-
-  const match =
-    cleaned.match(/\{[\s\S]*\}/);
-
-  if (!match) {
-    throw new Error(
-      "No JSON found."
-    );
-  }
-
-  return JSON.parse(match[0]);
+  return parseJson<T>(content);
 }

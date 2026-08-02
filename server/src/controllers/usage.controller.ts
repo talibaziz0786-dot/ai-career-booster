@@ -1,58 +1,43 @@
-import type { Request, Response } from "express";
-import Subscription from "../models/subscription.model.js";
+import type { AuthRequest } from "../middleware/auth.middleware.js";
+import {
+  asyncHandler,
+  sendSuccess,
+} from "../utils/http-response.js";
+import {
+  FREE_PLAN_LIMITS,
+  getSubscriptionOr404,
+} from "../utils/subscription.util.js";
 
-export const getUsage = async (
-  req: Request,
-  res: Response
-) => {
-  try {
-    const user = (req as any).user;
-
+export const getUsage = asyncHandler<AuthRequest>(
+  async (req, res) => {
     const subscription =
-      await Subscription.findOne({
-        user: user.id,
-      });
+      await getSubscriptionOr404(
+        res,
+        req.user!.id
+      );
 
     if (!subscription) {
-      return res.status(404).json({
-        success: false,
-        message: "Subscription not found",
-      });
+      return;
     }
 
     const plan = subscription.plan;
 
-    const limits =
-      plan === "free"
-        ? {
-            resume: 5,
-            ats: 5,
-            interview: 20,
-            coverLetter: 5,
-          }
-        : null;
-
-    return res.json({
-      success: true,
-
+    return sendSuccess(res, {
       plan,
 
       status: subscription.status,
 
       usage: subscription.usage,
 
-      limits,
+      limits:
+        plan === "free"
+          ? FREE_PLAN_LIMITS
+          : null,
 
       trialEnd: subscription.trialEnd,
 
       expiresAt: subscription.expiresAt,
     });
-  } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Unable to fetch usage",
-    });
-  }
-};
+  },
+  "Unable to fetch usage"
+);

@@ -1,56 +1,42 @@
-import { Request, Response } from "express";
+import type { Request } from "express";
 
+import { runRecruiterSimulation } from "../services/ai/recruiter-simulation.service.js";
 import {
-  runRecruiterSimulation,
-} from "../services/ai/recruiter-simulation.service.js";
+  asyncHandler,
+  sendError,
+  sendSuccess,
+} from "../utils/http-response.js";
 
-export const recruiterSimulationController =
-  async (
-    req: Request,
-    res: Response
-  ) => {
-    try {
-      const {
+export const recruiterSimulationController = asyncHandler<Request>(
+  async (req, res) => {
+    const {
+      resumeAnalysis,
+      interviewAnalysis,
+      careerProfile,
+    } = req.body;
+
+    if (
+      !resumeAnalysis ||
+      !interviewAnalysis ||
+      !careerProfile
+    ) {
+      return sendError(
+        res,
+        400,
+        "Missing required recruiter simulation data."
+      );
+    }
+
+    const simulation =
+      await runRecruiterSimulation({
         resumeAnalysis,
         interviewAnalysis,
         careerProfile,
-      } = req.body;
-
-      if (
-        !resumeAnalysis ||
-        !interviewAnalysis ||
-        !careerProfile
-      ) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "Missing required recruiter simulation data.",
-        });
-      }
-
-      const simulation =
-        await runRecruiterSimulation({
-          resumeAnalysis,
-          interviewAnalysis,
-          careerProfile,
-        });
-
-      return res.json({
-        success: true,
-        simulation,
       });
 
-    } catch (error) {
-
-      console.error(
-        "Recruiter Simulation Error:",
-        error
-      );
-
-      return res.status(500).json({
-        success: false,
-        message:
-          "Recruiter simulation failed.",
-      });
-    }
-  };
+    return sendSuccess(res, {
+      simulation,
+    });
+  },
+  "Recruiter simulation failed."
+);

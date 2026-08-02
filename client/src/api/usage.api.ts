@@ -1,22 +1,8 @@
-import axios from "axios";
+import { createApiClient } from "../lib/api-client";
 
-const API =
-  import.meta.env.VITE_API_URL ??
-  "http://localhost:5000";
-
-const usageApi = axios.create({
-  baseURL: `${API}/api/usage`,
-});
-
-usageApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
-});
+const usageApi = createApiClient(
+  "/api/usage"
+);
 
 export interface UsageResponse {
   success: boolean;

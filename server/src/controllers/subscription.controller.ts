@@ -1,50 +1,40 @@
-import type { Request, Response } from "express";
+import type { AuthRequest } from "../middleware/auth.middleware.js";
 import Subscription from "../models/subscription.model.js";
+import {
+  asyncHandler,
+  sendSuccess,
+} from "../utils/http-response.js";
+import {
+  clearDailyUsage,
+  findSubscriptionByUser,
+  getSubscriptionOr404,
+} from "../utils/subscription.util.js";
 
-export const getMySubscription = async (
-  req: Request,
-  res: Response
-) => {
-  try {
-    const user = (req as any).user;
-
+export const getMySubscription = asyncHandler<AuthRequest>(
+  async (req, res) => {
     const subscription =
-      await Subscription.findOne({
-        user: user.id,
-      });
+      await getSubscriptionOr404(
+        res,
+        req.user!.id
+      );
 
     if (!subscription) {
-      return res.status(404).json({
-        success: false,
-        message: "Subscription not found",
-      });
+      return;
     }
 
-    return res.status(200).json({
-      success: true,
+    return sendSuccess(res, {
       subscription,
     });
-  } catch (error) {
-    console.error(error);
+  },
+  "Unable to fetch subscription"
+);
 
-    return res.status(500).json({
-      success: false,
-      message: "Unable to fetch subscription",
-    });
-  }
-};
-
-export const startTrial = async (
-  req: Request,
-  res: Response
-) => {
-  try {
-    const user = (req as any).user;
-
+export const startTrial = asyncHandler<AuthRequest>(
+  async (req, res) => {
     const existing =
-      await Subscription.findOne({
-        user: user.id,
-      });
+      await findSubscriptionByUser(
+        req.user!.id
+      );
 
     if (existing) {
       return res.status(400).json({
@@ -56,32 +46,24 @@ export const startTrial = async (
 
     const subscription =
       await Subscription.create({
-        user: user.id,
+        user: req.user!.id,
         plan: "trial",
         status: "active",
       });
 
-    return res.status(201).json({
-      success: true,
-      subscription,
-    });
-  } catch (error) {
-    console.error(error);
+    return sendSuccess(
+      res,
+      {
+        subscription,
+      },
+      201
+    );
+  },
+  "Unable to start trial"
+);
 
-    return res.status(500).json({
-      success: false,
-      message: "Unable to start trial",
-    });
-  }
-};
-
-export const upgradePlan = async (
-  req: Request,
-  res: Response
-) => {
-  try {
-    const user = (req as any).user;
-
+export const upgradePlan = asyncHandler<AuthRequest>(
+  async (req, res) => {
     const {
       plan,
       expiresAt,
@@ -94,24 +76,20 @@ export const upgradePlan = async (
     } = req.body;
 
     const subscription =
-      await Subscription.findOne({
-        user: user.id,
-      });
+      await getSubscriptionOr404(
+        res,
+        req.user!.id
+      );
 
     if (!subscription) {
-      return res.status(404).json({
-        success: false,
-        message:
-          "Subscription not found",
-      });
+      return;
     }
 
     subscription.plan = plan;
 
     subscription.status = "active";
 
-    subscription.expiresAt =
-      expiresAt;
+    subscription.expiresAt = expiresAt;
 
     subscription.razorpayOrderId =
       razorpayOrderId;
@@ -125,114 +103,62 @@ export const upgradePlan = async (
     subscription.paymentMethod =
       paymentMethod;
 
-    subscription.amountPaid =
-      amountPaid;
+    subscription.amountPaid = amountPaid;
 
-    subscription.currency =
-      currency;
+    subscription.currency = currency;
 
     await subscription.save();
 
-    return res.status(200).json({
-      success: true,
+    return sendSuccess(res, {
       subscription,
     });
-  } catch (error) {
-    console.error(error);
+  },
+  "Unable to upgrade plan"
+);
 
-    return res.status(500).json({
-      success: false,
-      message:
-        "Unable to upgrade plan",
+export const cancelSubscription = asyncHandler<AuthRequest>(
+  async (req, res) => {
+    const subscription =
+      await getSubscriptionOr404(
+        res,
+        req.user!.id
+      );
+
+    if (!subscription) {
+      return;
+    }
+
+    subscription.status = "cancelled";
+
+    await subscription.save();
+
+    return sendSuccess(res, {
+      message: "Subscription cancelled",
     });
-  }
-};
+  },
+  "Unable to cancel subscription"
+);
 
-export const cancelSubscription =
-  async (
-    req: Request,
-    res: Response
-  ) => {
-    try {
-      const user = (req as any).user;
+export const resetDailyUsage = asyncHandler<AuthRequest>(
+  async (req, res) => {
+    const subscription =
+      await getSubscriptionOr404(
+        res,
+        req.user!.id
+      );
 
-      const subscription =
-        await Subscription.findOne({
-          user: user.id,
-        });
-
-      if (!subscription) {
-        return res.status(404).json({
-          success: false,
-          message:
-            "Subscription not found",
-        });
-      }
-
-      subscription.status =
-        "cancelled";
-
-      await subscription.save();
-
-      return res.status(200).json({
-        success: true,
-        message:
-          "Subscription cancelled",
-      });
-    } catch (error) {
-      console.error(error);
-
-      return res.status(500).json({
-        success: false,
-        message:
-          "Unable to cancel subscription",
-      });
+    if (!subscription) {
+      return;
     }
-  };
 
-export const resetDailyUsage =
-  async (
-    req: Request,
-    res: Response
-  ) => {
-    try {
-      const user = (req as any).user;
+    clearDailyUsage(subscription);
 
-      const subscription =
-        await Subscription.findOne({
-          user: user.id,
-        });
+    await subscription.save();
 
-      if (!subscription) {
-        return res.status(404).json({
-          success: false,
-          message:
-            "Subscription not found",
-        });
-      }
-
-      subscription.usage.resumeToday = 0;
-      subscription.usage.atsToday = 0;
-      subscription.usage.interviewToday = 0;
-      subscription.usage.coverLetterToday = 0;
-
-      subscription.usage.lastReset =
-        new Date();
-
-      await subscription.save();
-
-      return res.status(200).json({
-        success: true,
-        message:
-          "Daily usage reset successfully",
-      });
-    } catch (error) {
-      console.error(error);
-
-      return res.status(500).json({
-        success: false,
-        message:
-          "Unable to reset usage",
-      });
-    }
-  };
+    return sendSuccess(res, {
+      message:
+        "Daily usage reset successfully",
+    });
+  },
+  "Unable to reset usage"
+);

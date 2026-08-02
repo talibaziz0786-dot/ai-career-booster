@@ -1,11 +1,14 @@
-import type { Request, Response } from "express";
-import { analyzeResumeWithAI } from "../services/ai/resume-analysis.service.js";
+import type { Request } from "express";
 
-export const analyzeResumeController = async (
-  req: Request,
-  res: Response
-) => {
-  try {
+import { analyzeResumeWithAI } from "../services/ai/resume-analysis.service.js";
+import {
+  asyncHandler,
+  sendError,
+  sendSuccess,
+} from "../utils/http-response.js";
+
+export const analyzeResumeController = asyncHandler<Request>(
+  async (req, res) => {
     const {
       resumeText,
       language = "english",
@@ -15,36 +18,21 @@ export const analyzeResumeController = async (
       !resumeText ||
       resumeText.trim().length === 0
     ) {
-      return res.status(400).json({
-        success: false,
-        message: "Resume text is required.",
-      });
+      return sendError(
+        res,
+        400,
+        "Resume text is required."
+      );
     }
 
-    const analysis =
-      await analyzeResumeWithAI(
-        resumeText,
-        language
-      );
-
-    return res.json({
-      success: true,
-      analysis,
-    });
-
-  } catch (error) {
-
-    console.error(
-      "Resume Analysis Controller Error"
+    const analysis = await analyzeResumeWithAI(
+      resumeText,
+      language
     );
 
-    console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      message:
-        "Failed to analyze resume.",
+    return sendSuccess(res, {
+      analysis,
     });
-
-  }
-};
+  },
+  "Failed to analyze resume."
+);

@@ -1,51 +1,29 @@
-import type { Request, Response } from "express";
+import type { Request } from "express";
 
-import { extractResumeText }
-from "../services/resume-parser.service.js";
+import { extractResumeText } from "../services/resume-parser.service.js";
+import {
+  asyncHandler,
+  sendError,
+  sendSuccess,
+} from "../utils/http-response.js";
 
-export const uploadResume =
-async (
-  req: Request,
-  res: Response
-) => {
-
-  try {
-
+export const uploadResume = asyncHandler<Request>(
+  async (req, res) => {
     if (!req.file) {
-
-      return res.status(400).json({
-        success: false,
-        message: "Resume missing",
-      });
-
+      return sendError(
+        res,
+        400,
+        "Resume missing"
+      );
     }
 
-    const resumeText =
-      await extractResumeText(
-        req.file.path
-      );
+    const resumeText = await extractResumeText(
+      req.file.path
+    );
 
-    res.json({
-
-      success: true,
-
+    return sendSuccess(res, {
       resumeText,
-
     });
-
-  } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-
-      success: false,
-
-      message:
-        "Resume parsing failed",
-
-    });
-
-  }
-
-};
+  },
+  "Resume parsing failed"
+);
