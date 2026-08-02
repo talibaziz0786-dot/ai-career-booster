@@ -47,6 +47,24 @@ describe("retry", () => {
     expect(fn).toHaveBeenCalledTimes(2);
   });
 
+  it("defaults to 2 retries with a 500ms delay", async () => {
+    const fn = vi.fn().mockRejectedValue(new Error("boom"));
+
+    const promise = retry(fn);
+    const assertion = expect(promise).rejects.toThrow("boom");
+
+    await vi.advanceTimersByTimeAsync(499);
+    expect(fn).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(1);
+    expect(fn).toHaveBeenCalledTimes(2);
+
+    await vi.advanceTimersByTimeAsync(500);
+    await assertion;
+
+    expect(fn).toHaveBeenCalledTimes(3);
+  });
+
   it("does not wait when retries are disabled", async () => {
     const fn = vi.fn().mockRejectedValue(new Error("boom"));
 
