@@ -3,14 +3,18 @@ import { buildResumeAnalysisPrompt } from "./prompts/resume-analysis.prompt.js";
 
 export async function analyzeResumeWithAI(
   resumeText: string,
-  language: string = "english"
+  language: string = "english",
+  userId?: string
 ) {
   const prompt = buildResumeAnalysisPrompt(
     resumeText,
     language
   );
 
-  const aiResponse = await askAI(prompt);
+  const aiResponse = await askAI({
+    userId,
+    prompt,
+  });
 
   const rawContent =
     aiResponse.content ?? "";

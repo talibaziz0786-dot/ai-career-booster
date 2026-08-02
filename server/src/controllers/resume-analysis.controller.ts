@@ -24,7 +24,8 @@ export const analyzeResumeController = async (
     const analysis =
       await analyzeResumeWithAI(
         resumeText,
-        language
+        language,
+        (req as any).user?.id
       );
 
     return res.json({

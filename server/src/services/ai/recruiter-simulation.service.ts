@@ -5,16 +5,22 @@ export interface RecruiterSimulationInput {
   resumeAnalysis: unknown;
   interviewAnalysis: unknown;
   careerProfile: unknown;
+  userId?: string;
 }
 
 export async function runRecruiterSimulation(
   data: RecruiterSimulationInput
 ) {
+  const { userId, ...simulationData } = data;
+
   const prompt = recruiterSimulationPrompt(
-    JSON.stringify(data, null, 2)
+    JSON.stringify(simulationData, null, 2)
   );
 
-  const result = await askAI(prompt);
+  const result = await askAI({
+    userId,
+    prompt,
+  });
 
   const raw =
     result.content?.trim() || "";

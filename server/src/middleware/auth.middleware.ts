@@ -51,16 +51,11 @@ async (
     const token =
       authHeader.split(" ")[1];
 
-// console.log("TOKEN:", token);
-   console.log("JWT_SECRET:", process.env.JWT_SECRET);
-
     const decoded =
 jwt.verify(
         token,
         process.env.JWT_SECRET!
       ) as JwtPayload;
-
-      // console.log("DECODED:", decoded);
 
     const user =
       await User.findById(
@@ -81,8 +76,6 @@ jwt.verify(
     next();
 
   } catch (error) {
-
-     console.log("JWT ERROR:", error);
 
     return res.status(401).json({
       message:
