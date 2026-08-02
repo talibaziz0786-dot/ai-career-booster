@@ -1,10 +1,15 @@
 import bcrypt from "bcryptjs";
-import type { Request, Response } from "express";
+import type {
+  NextFunction,
+  Request,
+  Response,
+} from "express";
 
 import { User } from "../models/user.model.js";
 import { generateToken } from "../utils/generateToken.js";
 import Subscription from "../models/subscription.model.js";
 import type { AuthRequest } from "../middleware/auth.middleware.js";
+import { AppError } from "../utils/errors.js";
 
 const EMAIL_PATTERN =
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -35,7 +40,8 @@ function normalizeCredentials(body: unknown) {
 
 export const registerUser = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
   try {
     const credentials =
@@ -92,15 +98,20 @@ await user.save();
       token: generateToken(user.id),
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Registration failed",
-    });
+    next(
+      new AppError(
+        "Registration failed",
+        500,
+        { cause: error }
+      )
+    );
   }
 };
 
 export const loginUser = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
   try {
     const credentials =
@@ -145,9 +156,13 @@ export const loginUser = async (
       token: generateToken(user.id),
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Login failed",
-    });
+    next(
+      new AppError(
+        "Login failed",
+        500,
+        { cause: error }
+      )
+    );
   }
 };
 

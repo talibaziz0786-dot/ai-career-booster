@@ -12,6 +12,7 @@ from "../models/user.model.js";
 import { requireEnv }
 from "../config/env.js";
 
+import { AppError } from "../utils/errors.js";
 
 interface JwtPayload {
   id: string;
@@ -100,10 +101,29 @@ jwt.verify(
 
   } catch (error) {
 
-    return res.status(401).json({
-      message:
-        "Invalid token",
-    });
+    if (error instanceof jwt.TokenExpiredError) {
+
+      return res.status(401).json({
+        message: "Token expired",
+      });
+
+    }
+
+    if (error instanceof jwt.JsonWebTokenError) {
+
+      return res.status(401).json({
+        message: "Invalid token",
+      });
+
+    }
+
+    return next(
+      new AppError(
+        "Authentication failed",
+        500,
+        { cause: error }
+      )
+    );
 
   }
 };

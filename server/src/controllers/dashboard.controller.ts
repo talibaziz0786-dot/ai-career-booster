@@ -1,11 +1,16 @@
-import type { Response } from "express";
+import type {
+  NextFunction,
+  Response,
+} from "express";
 import InterviewSession from "../models/interview-session.model.js";
 import type { AuthRequest } from "../middleware/auth.middleware.js";
+import { AppError } from "../utils/errors.js";
 
 export const getDashboardStats =
 async (
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
   try {
 
@@ -82,11 +87,13 @@ async (
 
   } catch (error) {
 
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-    });
+    next(
+      new AppError(
+        "Unable to load dashboard stats",
+        500,
+        { cause: error }
+      )
+    );
 
   }
 };

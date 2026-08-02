@@ -1,4 +1,6 @@
-import type { Response } from "express";
+import type { NextFunction, Response } from "express";
+
+import { AppError } from "../utils/errors.js";
 
 import InterviewSession
 from "../models/interview-session.model.js";
@@ -10,7 +12,8 @@ import type {
 export const saveInterview =
 async (
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
   try {
 
@@ -34,11 +37,13 @@ async (
 
   } catch (error) {
 
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-    });
+    next(
+      new AppError(
+        "Unable to save interview session",
+        500,
+        { cause: error }
+      )
+    );
 
   }
 };
@@ -46,7 +51,8 @@ async (
 export const getMyInterviews =
 async (
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
   try {
 
@@ -64,11 +70,13 @@ async (
 
   } catch (error) {
 
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-    });
+    next(
+      new AppError(
+        "Unable to load interview sessions",
+        500,
+        { cause: error }
+      )
+    );
 
   }
 };

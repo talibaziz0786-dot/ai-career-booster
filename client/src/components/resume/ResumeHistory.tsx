@@ -1,5 +1,11 @@
 import { useEffect } from "react";
 
+import toast from "react-hot-toast";
+
+import {
+  getErrorMessage,
+} from "../../utils/getErrorMessage";
+
 import {
   getMyResumes,
 } from "../../services/resume-builder.service";
@@ -35,7 +41,12 @@ export default function ResumeHistory() {
 
         setResumeList(resumes);
       } catch (error) {
-        console.error(error);
+        toast.error(
+          getErrorMessage(
+            error,
+            "Failed to load resume history"
+          )
+        );
       }
     }
 
@@ -63,7 +74,12 @@ export default function ResumeHistory() {
 
   } catch (error) {
 
-    console.error(error);
+    toast.error(
+      getErrorMessage(
+        error,
+        "Failed to open resume"
+      )
+    );
 
   }
 }

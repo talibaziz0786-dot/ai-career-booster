@@ -4,7 +4,9 @@ import { useInterviewStore } from "../store/interview-store";
 import { useResumeStore }
 from "../store/resume-store";
 import { useEffect } from "react";
+import toast from "react-hot-toast";
 import { api } from "../lib/axios";
+import { getErrorMessage } from "../utils/getErrorMessage";
 import InterviewResultPage
 from "./InterviewResultPage";
 import UpgradeModal from "../components/subscription/UpgradeModal";
@@ -152,7 +154,12 @@ console.log(
 
   } catch (error) {
 
-    console.error(error);
+    toast.error(
+      getErrorMessage(
+        error,
+        "Failed to start the interview"
+      )
+    );
 
   } finally {
 

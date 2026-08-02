@@ -42,7 +42,8 @@ export async function analyzeResumeWithAI(
     console.error(rawContent);
 
     throw new Error(
-      "Unable to parse Resume Analysis JSON."
+      "Unable to parse Resume Analysis JSON.",
+      { cause: error }
     );
   }
 }

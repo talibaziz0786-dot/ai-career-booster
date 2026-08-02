@@ -13,6 +13,10 @@ import LanguagesForm from "./LanguagesForm";
 
 import { useEffect, useState, } from "react";
 
+import toast from "react-hot-toast";
+
+import { getErrorMessage } from "../../utils/getErrorMessage";
+
 import { useResumeStore } from "../../store/resume-store";
 
 import { generateResume } from "../../services/resume-builder.service";
@@ -50,12 +54,15 @@ const handleGenerateResume = async () => {
     updateData(mapped);
 
     setAIResume(mapped);
-      alert("✅ AI Resume Generated Successfully");
+      toast.success("AI resume generated successfully");
 
   } catch (error) {
-    console.error(error);
-
-    alert("Resume generation failed.");
+    toast.error(
+      getErrorMessage(
+        error,
+        "Resume generation failed"
+      )
+    );
   } finally {
     setLoading(false);
   }
