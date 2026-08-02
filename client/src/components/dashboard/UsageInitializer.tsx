@@ -1,4 +1,10 @@
 import { useEffect } from "react";
+import toast from "react-hot-toast";
+
+import {
+  getErrorMessage,
+  isUnauthorized,
+} from "../../utils/getErrorMessage";
 
 import { getUsage } from "../../api/usage.api";
 
@@ -26,7 +32,16 @@ export default function UsageInitializer() {
           limits: data.limits,
         });
       } catch (error) {
-        console.error(error);
+        if (isUnauthorized(error)) {
+          return;
+        }
+
+        toast.error(
+          getErrorMessage(
+            error,
+            "Failed to load your usage"
+          )
+        );
       }
     }
 

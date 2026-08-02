@@ -84,11 +84,37 @@ ${prompt}
 
 `;
 
-  const response = await retryAI(async () => {
+  let response: AIResponse;
 
-    return await askAI(finalPrompt);
+  try {
 
-  });
+    response = await retryAI(async () => {
+
+      return await askAI(finalPrompt);
+
+    });
+
+  } catch (error) {
+
+    logAIRequest({
+
+      module,
+
+      provider: "unknown",
+
+      success: false,
+
+      retries: 0,
+
+      latency: Date.now() - started,
+
+      timestamp: new Date().toISOString(),
+
+    });
+
+    throw error;
+
+  }
 
   if (useCache && cacheKey) {
 

@@ -14,6 +14,8 @@ import {
 
 import Input from "../components/ui/Input";
 
+import { getErrorMessage } from "../utils/getErrorMessage";
+
 import {
   registerSchema,
 type  RegisterInput,
@@ -72,11 +74,12 @@ export default function RegisterPage() {
       navigate(
         "/dashboard"
       );
-    } catch (error: any) {
+    } catch (error) {
       toast.error(
-        error?.response?.data
-          ?.message ||
+        getErrorMessage(
+          error,
           "Registration failed"
+        )
       );
     } finally {
       setLoading(false);

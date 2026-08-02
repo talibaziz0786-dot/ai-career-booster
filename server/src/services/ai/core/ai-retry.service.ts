@@ -1,3 +1,5 @@
+import { toError } from "../../../utils/errors.js";
+
 interface RetryOptions {
 
   retries?: number;
@@ -56,7 +58,9 @@ export async function retryAI<T>(
 
       console.warn(
 
-        `[AI Retry] Attempt ${attempt} failed.`
+        `[AI Retry] Attempt ${attempt}/${retries} failed:`,
+
+        toError(error).message
 
       );
 
@@ -74,6 +78,12 @@ export async function retryAI<T>(
 
   }
 
-  throw lastError;
+  throw new Error(
+
+    `AI call failed after ${retries} attempts.`,
+
+    { cause: lastError }
+
+  );
 
 }

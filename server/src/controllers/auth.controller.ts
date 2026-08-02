@@ -1,13 +1,19 @@
 import bcrypt from "bcryptjs";
-import type { Request, Response } from "express";
+import type {
+  NextFunction,
+  Request,
+  Response,
+} from "express";
 
 import { User } from "../models/user.model.js";
 import { generateToken } from "../utils/generateToken.js";
 import Subscription from "../models/subscription.model.js";
+import { AppError } from "../utils/errors.js";
 
 export const registerUser = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
   try {
     const { name, email, password } = req.body;
@@ -48,15 +54,20 @@ await user.save();
       token: generateToken(user.id),
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Registration failed",
-    });
+    next(
+      new AppError(
+        "Registration failed",
+        500,
+        { cause: error }
+      )
+    );
   }
 };
 
 export const loginUser = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
   try {
     const { email, password } = req.body;
@@ -91,9 +102,13 @@ export const loginUser = async (
       token: generateToken(user.id),
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Login failed",
-    });
+    next(
+      new AppError(
+        "Login failed",
+        500,
+        { cause: error }
+      )
+    );
   }
 };
 

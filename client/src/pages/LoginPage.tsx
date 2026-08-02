@@ -14,6 +14,8 @@ import {
 
 import Input from "../components/ui/Input";
 
+import { getErrorMessage } from "../utils/getErrorMessage";
+
 import {
   loginSchema,
  type LoginInput,
@@ -77,11 +79,12 @@ export default function LoginPage() {
       navigate(
         "/dashboard"
       );
-    } catch (error: any) {
+    } catch (error) {
       toast.error(
-        error?.response?.data
-          ?.message ||
+        getErrorMessage(
+          error,
           "Login failed"
+        )
       );
     } finally {
       setLoading(false);

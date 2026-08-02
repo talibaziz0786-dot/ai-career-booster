@@ -37,7 +37,8 @@ export async function runRecruiterSimulation(
     );
 
     throw new Error(
-      "Recruiter AI JSON parsing failed."
+      "Recruiter AI JSON parsing failed.",
+      { cause: error }
     );
   }
 }

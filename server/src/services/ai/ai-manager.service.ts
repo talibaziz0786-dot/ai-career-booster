@@ -5,6 +5,8 @@ import { generateWithLocalAI } from "./providers/local.provider.js";
 
 import { getAIModel } from "./router/model-resolver.service.js";
 
+import { toError } from "../../utils/errors.js";
+
 export interface AIResponse {
   provider: string;
   model?: string;
@@ -24,7 +26,7 @@ export async function askAI({
   const aiConfig =
     await getAIModel(userId);
 
-  const errors: unknown[] = [];
+  const errors: Error[] = [];
 
   // ==========================
   // PRIMARY MODEL
@@ -44,10 +46,16 @@ export async function askAI({
   } catch (error) {
 
     console.error(
-      `${aiConfig.primary} Failed`
+      `${aiConfig.primary} Failed:`,
+      toError(error).message
     );
 
-    errors.push(error);
+    errors.push(
+      new Error(
+        `${aiConfig.primary} failed`,
+        { cause: error }
+      )
+    );
 
   }
 
@@ -74,10 +82,16 @@ export async function askAI({
     } catch (error) {
 
       console.error(
-        `${aiConfig.fallback} Failed`
+        `${aiConfig.fallback} Failed:`,
+        toError(error).message
       );
 
-      errors.push(error);
+      errors.push(
+        new Error(
+          `${aiConfig.fallback} failed`,
+          { cause: error }
+        )
+      );
 
     }
 
@@ -97,9 +111,16 @@ export async function askAI({
 
   } catch (error) {
 
-    console.error("DeepSeek Failed");
+    console.error(
+      "DeepSeek Failed:",
+      toError(error).message
+    );
 
-    errors.push(error);
+    errors.push(
+      new Error("DeepSeek failed", {
+        cause: error,
+      })
+    );
 
   }
 
@@ -117,9 +138,16 @@ export async function askAI({
 
   } catch (error) {
 
-    console.error("Qwen Failed");
+    console.error(
+      "Qwen Failed:",
+      toError(error).message
+    );
 
-    errors.push(error);
+    errors.push(
+      new Error("Qwen failed", {
+        cause: error,
+      })
+    );
 
   }
 
@@ -137,16 +165,24 @@ export async function askAI({
 
   } catch (error) {
 
-    console.error("Local AI Failed");
+    console.error(
+      "Local AI Failed:",
+      toError(error).message
+    );
 
-    errors.push(error);
+    errors.push(
+      new Error("Local AI failed", {
+        cause: error,
+      })
+    );
 
   }
 
-  console.error(errors);
-
-  throw new Error(
-    "All AI Providers Failed."
+  throw new AggregateError(
+    errors,
+    `All AI providers failed: ${errors
+      .map((error) => toError(error).message)
+      .join("; ")}`
   );
 
 }

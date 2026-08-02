@@ -1,15 +1,29 @@
-import { Request, Response } from "express";
+import type {
+  NextFunction,
+  Request,
+  Response,
+} from "express";
 import { askAI } from "../services/ai/ai-manager.service.js";
+import { AppError } from "../utils/errors.js";
 
 export const evaluateAnswer = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
   try {
     const {
       question,
       answer,
     } = req.body;
+
+    if (!question || !answer) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Question and answer are required.",
+      });
+    }
 
     const prompt = `
 You are a Senior Technical Recruiter.
@@ -39,8 +53,12 @@ Return response in JSON format:
       result,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-    });
+    next(
+      new AppError(
+        "Answer evaluation failed",
+        500,
+        { cause: error }
+      )
+    );
   }
 };

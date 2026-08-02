@@ -1,6 +1,11 @@
 import { motion } from "framer-motion";
 import { CheckCircle2 } from "lucide-react";
 import { useEffect } from "react";
+import toast from "react-hot-toast";
+
+import {
+  getErrorMessage,
+} from "../utils/getErrorMessage";
 
 import {
   useSubscriptionStore,
@@ -66,7 +71,12 @@ useEffect(() => {
 
     } catch (error) {
 
-      console.error(error);
+      toast.error(
+        getErrorMessage(
+          error,
+          "Failed to load your subscription"
+        )
+      );
 
     }
 

@@ -1,3 +1,5 @@
+import { toError } from "../../../utils/errors.js";
+
 export async function retry<T>(
 
   fn: () => Promise<T>,
@@ -8,7 +10,7 @@ export async function retry<T>(
 
 ): Promise<T> {
 
-  let lastError;
+  let lastError: unknown;
 
   for (let i = 0; i <= retries; i++) {
 
@@ -19,6 +21,11 @@ export async function retry<T>(
     } catch (error) {
 
       lastError = error;
+
+      console.warn(
+        `[Retry] Attempt ${i + 1}/${retries + 1} failed:`,
+        toError(error).message
+      );
 
       if (i < retries) {
 
@@ -34,6 +41,9 @@ export async function retry<T>(
 
   }
 
-  throw lastError;
+  throw new Error(
+    `Operation failed after ${retries + 1} attempts.`,
+    { cause: lastError }
+  );
 
 }

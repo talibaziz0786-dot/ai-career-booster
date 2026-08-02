@@ -34,6 +34,11 @@ import paymentRoutes
 from "./routes/payment.routes.js";
 import usageRoutes from "./routes/usage.routes.js";
 
+import {
+  errorHandler,
+  notFoundHandler,
+} from "./middleware/error.middleware.js";
+
 
 const app = express();
 
@@ -125,5 +130,9 @@ app.use(
   "/api/ai/interview",
   interviewAIRoutes
 );
+
+app.use(notFoundHandler);
+
+app.use(errorHandler);
 
 export default app;
