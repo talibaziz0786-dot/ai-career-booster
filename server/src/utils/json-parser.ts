@@ -17,9 +17,16 @@ export function parseAIJson(
 
   if (!match) {
     throw new Error(
-      "No JSON found."
+      `No JSON found in AI response: ${cleaned.slice(0, 500)}`
     );
   }
 
-  return JSON.parse(match[0]);
+  try {
+    return JSON.parse(match[0]);
+  } catch (error) {
+    throw new Error(
+      `Invalid AI JSON: ${match[0].slice(0, 500)}`,
+      { cause: error }
+    );
+  }
 }

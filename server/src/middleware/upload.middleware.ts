@@ -1,5 +1,20 @@
+import crypto from "crypto";
 import multer from "multer";
 import path from "path";
+
+const ALLOWED_EXTENSIONS = [
+  ".pdf",
+  ".docx",
+  ".txt",
+];
+
+function safeExtension(
+  originalname: string
+) {
+  return path
+    .extname(path.basename(originalname))
+    .toLowerCase();
+}
 
 const storage = multer.diskStorage({
   destination: "uploads/",
@@ -7,7 +22,10 @@ const storage = multer.diskStorage({
   filename(req, file, cb) {
     cb(
       null,
-      `${Date.now()}-${file.originalname}`
+      `${Date.now()}-${crypto
+        .randomUUID()}${safeExtension(
+        file.originalname
+      )}`
     );
   },
 });
@@ -16,14 +34,12 @@ export const upload = multer({
   storage,
 
   fileFilter(req, file, cb) {
-    const ext = path.extname(
+    const ext = safeExtension(
       file.originalname
     );
 
     if (
-      ext === ".pdf" ||
-      ext === ".docx" ||
-      ext === ".txt"
+      ALLOWED_EXTENSIONS.includes(ext)
     ) {
       cb(null, true);
     } else {

@@ -13,7 +13,9 @@ export async function generateCareerIntelligence(
 
   cacheKey: string,
 
-  resumeText: string
+  resumeText: string,
+
+  userId?: string
 
 ): Promise<ResumeIntelligence> {
 
@@ -36,6 +38,8 @@ export async function generateCareerIntelligence(
       return await runAI({
 
         module: "career-intelligence",
+
+        userId,
 
         prompt: `
 ${CAREER_INTELLIGENCE_PROMPT}

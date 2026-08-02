@@ -3,8 +3,13 @@ import {
   useState,
 } from "react";
 
+import toast from "react-hot-toast";
+
 import { api }
 from "../lib/axios";
+
+import { getErrorMessage }
+from "../utils/getErrorMessage";
 
 import AddJobForm
 from "../components/jobs/AddJobForm";
@@ -19,14 +24,27 @@ export default function JobTrackerPage() {
  const fetchJobs =
   async () => {
 
-    const response =
-      await api.get(
-        "/api/jobs/all"
+    try {
+
+      const response =
+        await api.get(
+          "/api/jobs/all"
+        );
+
+      setJobs(
+        response.data.jobs
       );
 
-    setJobs(
-      response.data.jobs
-    );
+    } catch (error) {
+
+      toast.error(
+        getErrorMessage(
+          error,
+          "Failed to load jobs"
+        )
+      );
+
+    }
 };
 
 const deleteJob =
@@ -42,7 +60,12 @@ const deleteJob =
 
     } catch (error) {
 
-      console.error(error);
+      toast.error(
+        getErrorMessage(
+          error,
+          "Failed to delete job"
+        )
+      );
 
     }
 };

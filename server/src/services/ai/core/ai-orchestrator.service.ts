@@ -14,6 +14,8 @@ interface AIRequest {
 
   prompt: string;
 
+  userId?: string;
+
   language?: string;
 
   recruiterMode?: boolean;
@@ -39,6 +41,8 @@ export async function runAI({
   module,
 
   prompt,
+
+  userId,
 
   language = "english",
 
@@ -84,11 +88,43 @@ ${prompt}
 
 `;
 
-  const response = await retryAI(async () => {
+  let response: AIResponse;
 
-    return await askAI(finalPrompt);
+  try {
 
-  });
+    response = await retryAI(async () => {
+
+      return await askAI({
+
+        userId,
+
+        prompt: finalPrompt,
+
+      });
+
+    });
+
+  } catch (error) {
+
+    logAIRequest({
+
+      module,
+
+      provider: "unknown",
+
+      success: false,
+
+      retries: 0,
+
+      latency: Date.now() - started,
+
+      timestamp: new Date().toISOString(),
+
+    });
+
+    throw error;
+
+  }
 
   if (useCache && cacheKey) {
 

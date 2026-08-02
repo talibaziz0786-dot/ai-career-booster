@@ -1,8 +1,14 @@
 import { useState } from "react";
 
+import axios from "axios";
+
 import {
   generateInterview,
 } from "../api/interview.api";
+
+import {
+  getErrorMessage,
+} from "../utils/getErrorMessage";
 
 interface GenerateParams {
   role: string;
@@ -39,19 +45,23 @@ export default function useInterviewAI() {
       setQuestions(response.questions);
 
       return response.questions;
-    } catch (err: any) {
-      const data =
-        err?.response?.data;
+    } catch (err) {
+      const upgradeRequired =
+        axios.isAxiosError(err) &&
+        err.response?.data?.upgradeRequired ===
+          true;
 
-      if (data?.upgradeRequired) {
+      if (upgradeRequired) {
         setUpgradeRequired(true);
 
         return;
       }
 
       setError(
-        data?.message ??
+        getErrorMessage(
+          err,
           "Unable to generate interview."
+        )
       );
     } finally {
       setLoading(false);

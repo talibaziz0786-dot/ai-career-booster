@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import Subscription from "../models/subscription.model.js";
+import { AppError } from "../utils/errors.js";
 
 type Feature =
   | "resume"
@@ -150,13 +151,13 @@ export const checkAIUsage =
 
       next();
     } catch (error) {
-      console.error(error);
-
-      res.status(500).json({
-        success: false,
-        message:
-          "AI Usage Middleware Error",
-      });
+      next(
+        new AppError(
+          "Unable to verify AI usage limits",
+          500,
+          { cause: error }
+        )
+      );
     }
   };
 

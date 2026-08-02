@@ -1,6 +1,9 @@
 import { useInterviewStore } from "../../store/interview-store";
 import { api } from "../../lib/axios";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+
+import { getErrorMessage } from "../../utils/getErrorMessage";
 
 export default function InterviewControls() {
  const {
@@ -66,7 +69,7 @@ async () => {
   questions.length === 0 ||
   finalAnswers.length === 0
 ) {
-  alert(
+  toast.error(
     "Questions or answers missing"
   );
   return;
@@ -75,7 +78,7 @@ async () => {
 if (
   questions.length !== finalAnswers.length
 ) {
-  alert(
+  toast.error(
     "Please answer the current question before ending the interview."
   );
   return;
@@ -180,7 +183,12 @@ setCareerInsights(
 
   } catch (error) {
 
-    console.error(error);
+    toast.error(
+      getErrorMessage(
+        error,
+        "Failed to generate interview feedback"
+      )
+    );
 
   } finally {
 
@@ -198,7 +206,7 @@ if (loading) return;
 
 
 if (!currentAnswer.trim()) {
-  alert(
+  toast.error(
     "Please answer the current question first."
   );
   return;
@@ -285,7 +293,12 @@ console.log(
 
     } catch (error) {
 
-      console.error(error);
+      toast.error(
+        getErrorMessage(
+          error,
+          "Failed to generate the next question"
+        )
+      );
 
     } finally {
 

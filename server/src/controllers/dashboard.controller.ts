@@ -1,15 +1,23 @@
-import type { Request, Response } from "express";
+import type {
+  NextFunction,
+  Response,
+} from "express";
 import InterviewSession from "../models/interview-session.model.js";
+import type { AuthRequest } from "../middleware/auth.middleware.js";
+import { AppError } from "../utils/errors.js";
 
 export const getDashboardStats =
 async (
-  req: Request,
-  res: Response
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
 ) => {
   try {
 
     const interviews =
-      await InterviewSession.find();
+      await InterviewSession.find({
+        user: req.user!.id,
+      });
 
     const totalInterviews =
       interviews.length;
@@ -79,11 +87,13 @@ async (
 
   } catch (error) {
 
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-    });
+    next(
+      new AppError(
+        "Unable to load dashboard stats",
+        500,
+        { cause: error }
+      )
+    );
 
   }
 };

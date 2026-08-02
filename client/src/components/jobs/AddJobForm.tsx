@@ -2,6 +2,8 @@ import { useState } from "react";
 import { api } from "../../lib/axios";
 import toast from "react-hot-toast";
 
+import { getErrorMessage } from "../../utils/getErrorMessage";
+
 export default function AddJobForm({
   onCreated,
 }: {
@@ -44,10 +46,11 @@ export default function AddJobForm({
 
   } catch (error) {
 
-    console.error(error);
-
     toast.error(
-      "Failed To Add Job"
+      getErrorMessage(
+        error,
+        "Failed to add job"
+      )
     );
   }
 };

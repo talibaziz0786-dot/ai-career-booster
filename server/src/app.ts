@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 
+import { getAllowedOrigins } from "./config/env.js";
+
 import authRoutes from "./routes/auth.routes.js";
 import interviewRoutes from "./routes/interview.routes.js";
 import evaluationRoutes
@@ -34,6 +36,11 @@ import paymentRoutes
 from "./routes/payment.routes.js";
 import usageRoutes from "./routes/usage.routes.js";
 
+import {
+  errorHandler,
+  notFoundHandler,
+} from "./middleware/error.middleware.js";
+
 
 const app = express();
 
@@ -41,15 +48,12 @@ const app = express();
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://192.168.1.5:5173",
-    ],
+    origin: getAllowedOrigins(),
     credentials: true,
   })
 );
 
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 
 app.use("/api/auth", authRoutes);
 
@@ -125,5 +129,9 @@ app.use(
   "/api/ai/interview",
   interviewAIRoutes
 );
+
+app.use(notFoundHandler);
+
+app.use(errorHandler);
 
 export default app;

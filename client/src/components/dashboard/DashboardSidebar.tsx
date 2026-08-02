@@ -1,18 +1,14 @@
 import {
   X,
-  Home,
   LayoutDashboard,
   FileText,
   Briefcase,
   User,
   Settings,
-  CreditCard,
-  Crown,
   LogOut,
-  Mic,
 } from "lucide-react";
 
-import { Link, NavLink } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import { useDashboardStore } from "../../store/dashboard-store";
 import { useAuthStore } from "../../store/auth-store";
@@ -30,21 +26,6 @@ export default function DashboardSidebar() {
     (state) => state.logout
   );
 
-  const navClass = ({ isActive }: { isActive: boolean }) =>
-    `
-    flex
-    items-center
-    gap-3
-    rounded-xl
-    px-4
-    py-3
-    transition-all
-    ${
-      isActive
-        ? "bg-cyan-500 text-white shadow-lg"
-        : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10"
-    }
-  `;
 
   return (
     <aside

@@ -3,8 +3,13 @@ import {
   useState,
 } from "react";
 
+import toast from "react-hot-toast";
+
 import { api }
 from "../lib/axios";
+
+import { getErrorMessage }
+from "../utils/getErrorMessage";
 
 export function useJobs() {
 
@@ -13,6 +18,9 @@ export function useJobs() {
 
   const [loading,setLoading] =
     useState(true);
+
+  const [error,setError] =
+    useState<string | null>(null);
 
   useEffect(() => {
 
@@ -32,7 +40,15 @@ export function useJobs() {
 
         } catch(error) {
 
-          console.error(error);
+          const message =
+            getErrorMessage(
+              error,
+              "Failed to load jobs"
+            );
+
+          setError(message);
+
+          toast.error(message);
 
         } finally {
 
@@ -49,5 +65,6 @@ export function useJobs() {
   return {
     jobs,
     loading,
+    error,
   };
 }

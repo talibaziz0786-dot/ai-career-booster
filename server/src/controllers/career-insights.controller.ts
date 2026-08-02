@@ -1,28 +1,45 @@
 import type { Request, Response } from "express";
 import { askAI } from "../services/ai/ai-manager.service.js";
+import { asStringArray } from "../utils/validate-input.js";
 
 export const getCareerInsights = async (
   req: Request,
   res: Response
 ) => {
   try {
-    const {
-      overallScore,
-      strengths,
-      weaknesses,
-    } = req.body;
+    const overallScore = Number(
+      req.body?.overallScore
+    );
 
-    const result = await askAI(`
+    const strengths = asStringArray(
+      req.body?.strengths
+    );
+
+    const weaknesses = asStringArray(
+      req.body?.weaknesses
+    );
+
+    if (!Number.isFinite(overallScore)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "A numeric overallScore is required.",
+      });
+    }
+
+    const result = await askAI({
+      userId: (req as any).user?.id,
+      prompt: `
 You are a Senior FAANG Career Coach.
 
 Interview Score:
 ${overallScore}
 
 Strengths:
-${strengths?.join(", ")}
+${strengths.join(", ")}
 
 Weaknesses:
-${weaknesses?.join(", ")}
+${weaknesses.join(", ")}
 
 Return ONLY JSON.
 
@@ -31,7 +48,8 @@ Return ONLY JSON.
   "recommendedProjects": [],
   "careerAdvice": ""
 }
-`);
+`,
+    });
 
     const rawContent =
   result.content ?? "";

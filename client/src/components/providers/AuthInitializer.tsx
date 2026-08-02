@@ -1,4 +1,10 @@
 import { useEffect } from "react";
+import toast from "react-hot-toast";
+
+import {
+  getErrorMessage,
+  isUnauthorized,
+} from "../../utils/getErrorMessage";
 
 import { useAuthStore } from "../../store/auth-store";
 import { useSubscriptionStore } from "../../store/subscription-store";
@@ -32,7 +38,16 @@ export default function AuthInitializer() {
             null,
         });
       } catch (error) {
-        console.error(error);
+        if (isUnauthorized(error)) {
+          return;
+        }
+
+        toast.error(
+          getErrorMessage(
+            error,
+            "Failed to load your subscription"
+          )
+        );
       }
     }
 

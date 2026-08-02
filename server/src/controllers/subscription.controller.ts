@@ -1,5 +1,10 @@
 import type { Request, Response } from "express";
 import Subscription from "../models/subscription.model.js";
+import {
+  getPaidPlan,
+  planExpiryDate,
+  verifyRazorpaySignature,
+} from "../services/payment-verification.service.js";
 
 export const getMySubscription = async (
   req: Request,
@@ -84,14 +89,50 @@ export const upgradePlan = async (
 
     const {
       plan,
-      expiresAt,
       razorpayOrderId,
       razorpayPaymentId,
       razorpaySignature,
       paymentMethod,
-      amountPaid,
-      currency,
-    } = req.body;
+    } = req.body ?? {};
+
+    const paidPlan = getPaidPlan(plan);
+
+    if (!paidPlan) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid plan",
+      });
+    }
+
+    if (
+      typeof razorpayOrderId !== "string" ||
+      typeof razorpayPaymentId !== "string" ||
+      typeof razorpaySignature !== "string" ||
+      !verifyRazorpaySignature(
+        razorpayOrderId,
+        razorpayPaymentId,
+        razorpaySignature
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Payment verification failed",
+      });
+    }
+
+    const alreadyUsed =
+      await Subscription.findOne({
+        razorpayPaymentId,
+      });
+
+    if (alreadyUsed) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "Payment already processed",
+      });
+    }
 
     const subscription =
       await Subscription.findOne({
@@ -106,12 +147,17 @@ export const upgradePlan = async (
       });
     }
 
-    subscription.plan = plan;
+    const paymentDate = new Date();
+
+    subscription.plan = paidPlan.id;
 
     subscription.status = "active";
 
     subscription.expiresAt =
-      expiresAt;
+      planExpiryDate(
+        paidPlan,
+        paymentDate
+      );
 
     subscription.razorpayOrderId =
       razorpayOrderId;
@@ -123,13 +169,17 @@ export const upgradePlan = async (
       razorpaySignature;
 
     subscription.paymentMethod =
-      paymentMethod;
+      typeof paymentMethod === "string"
+        ? paymentMethod
+        : "razorpay";
 
     subscription.amountPaid =
-      amountPaid;
+      paidPlan.price;
 
-    subscription.currency =
-      currency;
+    subscription.currency = "INR";
+
+    subscription.paymentDate =
+      paymentDate;
 
     await subscription.save();
 

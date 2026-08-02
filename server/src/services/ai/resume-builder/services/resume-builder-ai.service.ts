@@ -42,6 +42,8 @@ export async function buildResume(
 
       module: "resume-builder",
 
+      userId,
+
       prompt: `
 
 ${RESUME_BUILDER_PROMPT}
