@@ -4,8 +4,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const verify = vi.fn();
 const findById = vi.fn();
 
+class TokenExpiredError extends Error {}
+class JsonWebTokenError extends Error {}
+
 vi.mock("jsonwebtoken", () => ({
-  default: { verify },
+  default: {
+    verify,
+    TokenExpiredError,
+    JsonWebTokenError,
+  },
 }));
 
 vi.mock("../../src/models/user.model.js", () => ({
@@ -71,7 +78,7 @@ describe("authMiddleware", () => {
 
   it("rejects an invalid token", async () => {
     verify.mockImplementation(() => {
-      throw new Error("jwt malformed");
+      throw new JsonWebTokenError("jwt malformed");
     });
     const res = mockResponse();
 
@@ -109,21 +116,42 @@ describe("authMiddleware", () => {
     expect(verify).toHaveBeenCalledWith("token", "test-secret");
     expect(findById).toHaveBeenCalledWith("user-1");
     expect(select).toHaveBeenCalledWith("-password");
-    expect(req.user).toBe(user);
+    expect(req.user).toStrictEqual(user);
     expect(next).toHaveBeenCalledTimes(1);
     expect(res.status).not.toHaveBeenCalled();
   });
 
-  it("returns 401 when the user lookup fails", async () => {
-    verify.mockReturnValue({ id: "user-1" });
-    findById.mockReturnValue({
-      select: vi.fn().mockRejectedValue(new Error("db down")),
+  it("rejects an expired token", async () => {
+    verify.mockImplementation(() => {
+      throw new TokenExpiredError("jwt expired");
     });
     const res = mockResponse();
 
     await authMiddleware(mockRequest("Bearer token"), res, next);
 
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({ message: "Invalid token" });
+    expect(res.json).toHaveBeenCalledWith({ message: "Token expired" });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it("forwards a non-JWT failure to the error handler", async () => {
+    const dbError = new Error("db down");
+
+    verify.mockReturnValue({ id: "user-1" });
+    findById.mockReturnValue({
+      select: vi.fn().mockRejectedValue(dbError),
+    });
+    const res = mockResponse();
+
+    await authMiddleware(mockRequest("Bearer token"), res, next);
+
+    expect(res.status).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: "Authentication failed",
+        statusCode: 500,
+        cause: dbError,
+      })
+    );
   });
 });

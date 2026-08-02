@@ -2,7 +2,8 @@ import { askAI } from "./ai/ai-manager.service.js";
 import { parseAIJson } from "../utils/json-parser.js";
 
 export async function analyzeResumeAI(
-  resumeText: string
+  resumeText: string,
+  userId?: string
 ) {
 
   const prompt = `
@@ -36,7 +37,10 @@ JSON must end with }
 `;
 
   const ai =
-    await askAI(prompt);
+    await askAI({
+      userId,
+      prompt,
+    });
 
   return parseAIJson(
     ai.content

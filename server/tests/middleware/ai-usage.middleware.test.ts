@@ -162,18 +162,21 @@ describe("checkAIUsage", () => {
     expect(sub.usage.resumeToday).toBe(2);
   });
 
-  it("returns 500 when the subscription lookup throws", async () => {
-    findOne.mockRejectedValue(new Error("db down"));
-    vi.spyOn(console, "error").mockImplementation(() => {});
+  it("forwards a 500 to the error handler when the lookup throws", async () => {
+    const dbError = new Error("db down");
+
+    findOne.mockRejectedValue(dbError);
     const res = mockResponse();
 
     await checkAIUsage("resume")(mockRequest(), res, next);
 
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({
-      success: false,
-      message: "AI Usage Middleware Error",
-    });
-    expect(next).not.toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: "Unable to verify AI usage limits",
+        statusCode: 500,
+        cause: dbError,
+      })
+    );
   });
 });

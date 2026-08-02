@@ -13,8 +13,16 @@ export interface AIModelConfig {
 }
 
 export async function getAIModel(
-  userId: string
+  userId?: string
 ): Promise<AIModelConfig> {
+
+  if (!userId) {
+    return {
+      tier: "free",
+      primary: "gemini-2.5-flash",
+      fallback: "gemini-2.5-flash",
+    };
+  }
 
   const subscription =
     await Subscription.findOne({

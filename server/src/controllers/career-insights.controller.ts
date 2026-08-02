@@ -27,7 +27,9 @@ export const getCareerInsights = async (
       });
     }
 
-    const result = await askAI(`
+    const result = await askAI({
+      userId: (req as any).user?.id,
+      prompt: `
 You are a Senior FAANG Career Coach.
 
 Interview Score:
@@ -46,7 +48,8 @@ Return ONLY JSON.
   "recommendedProjects": [],
   "careerAdvice": ""
 }
-`);
+`,
+    });
 
     const rawContent =
   result.content ?? "";

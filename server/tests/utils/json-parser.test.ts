@@ -18,10 +18,20 @@ describe("parseAIJson", () => {
   });
 
   it("throws when no JSON object is present", () => {
-    expect(() => parseAIJson("plain text")).toThrow("No JSON found.");
+    expect(() => parseAIJson("plain text")).toThrow(
+      "No JSON found in AI response: plain text"
+    );
   });
 
-  it("propagates a JSON syntax error for malformed JSON", () => {
-    expect(() => parseAIJson('{"score":}')).toThrow(SyntaxError);
+  it("wraps a JSON syntax error, keeping the original as cause", () => {
+    expect(() => parseAIJson('{"score":}')).toThrow(
+      'Invalid AI JSON: {"score":}'
+    );
+
+    try {
+      parseAIJson('{"score":}');
+    } catch (error) {
+      expect((error as Error).cause).toBeInstanceOf(SyntaxError);
+    }
   });
 });

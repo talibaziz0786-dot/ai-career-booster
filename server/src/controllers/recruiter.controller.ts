@@ -33,6 +33,7 @@ export const recruiterSimulationController =
           resumeAnalysis,
           interviewAnalysis,
           careerProfile,
+          userId: (req as any).user?.id,
         });
 
       return res.json({

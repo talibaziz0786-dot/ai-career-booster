@@ -1,43 +1,10 @@
-import crypto from "crypto";
-
 import type { Request, Response } from "express";
 import Subscription from "../models/subscription.model.js";
-
-import { requireEnv } from "../config/env.js";
-
 import {
-  PAID_PLANS,
-  isPaidPlan,
-} from "../config/plans.js";
-
-function verifyRazorpaySignature(
-  orderId: string,
-  paymentId: string,
-  signature: string
-) {
-  const expected = crypto
-    .createHmac(
-      "sha256",
-      requireEnv("RAZORPAY_KEY_SECRET")
-    )
-    .update(`${orderId}|${paymentId}`)
-    .digest("hex");
-
-  const expectedBuffer =
-    Buffer.from(expected, "utf8");
-
-  const providedBuffer =
-    Buffer.from(signature, "utf8");
-
-  return (
-    expectedBuffer.length ===
-      providedBuffer.length &&
-    crypto.timingSafeEqual(
-      expectedBuffer,
-      providedBuffer
-    )
-  );
-}
+  getPaidPlan,
+  planExpiryDate,
+  verifyRazorpaySignature,
+} from "../services/payment-verification.service.js";
 
 export const getMySubscription = async (
   req: Request,
@@ -128,10 +95,12 @@ export const upgradePlan = async (
       paymentMethod,
     } = req.body ?? {};
 
-    if (!isPaidPlan(plan)) {
+    const paidPlan = getPaidPlan(plan);
+
+    if (!paidPlan) {
       return res.status(400).json({
         success: false,
-        message: "Unknown plan",
+        message: "Invalid plan",
       });
     }
 
@@ -165,9 +134,6 @@ export const upgradePlan = async (
       });
     }
 
-    const planDefinition =
-      PAID_PLANS[plan];
-
     const subscription =
       await Subscription.findOne({
         user: user.id,
@@ -181,18 +147,17 @@ export const upgradePlan = async (
       });
     }
 
-    subscription.plan = plan;
+    const paymentDate = new Date();
+
+    subscription.plan = paidPlan.id;
 
     subscription.status = "active";
 
-    subscription.expiresAt = new Date(
-      Date.now() +
-        planDefinition.durationDays *
-          24 *
-          60 *
-          60 *
-          1000
-    );
+    subscription.expiresAt =
+      planExpiryDate(
+        paidPlan,
+        paymentDate
+      );
 
     subscription.razorpayOrderId =
       razorpayOrderId;
@@ -209,12 +174,12 @@ export const upgradePlan = async (
         : "razorpay";
 
     subscription.amountPaid =
-      planDefinition.amount;
+      paidPlan.price;
 
-    subscription.currency =
-      planDefinition.currency;
+    subscription.currency = "INR";
 
-    subscription.paymentDate = new Date();
+    subscription.paymentDate =
+      paymentDate;
 
     await subscription.save();
 

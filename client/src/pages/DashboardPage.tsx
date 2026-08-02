@@ -4,8 +4,6 @@ import DashboardHeader from "../components/dashboard/DashboardHeader";
 import AnalyticsCards from "../components/dashboard/AnalyticsCards";
 import ATSScoreCard from "../components/dashboard/ATSScoreCard";
 import ResumeStatsChart from "../components/dashboard/ResumeStatsChart";
-import RecentActivity from "../components/dashboard/RecentActivity";
-import JobTrackerWidget from "../components/dashboard/JobTrackerWidget";
 import ProfileCompletion from "../components/dashboard/ProfileCompletion";
 import { useDashboardStore, } from "../store/dashboard-store";
 import { useAuthStore } from "../store/auth-store";

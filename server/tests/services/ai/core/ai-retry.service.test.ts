@@ -31,7 +31,10 @@ describe("retryAI", () => {
 
     await expect(promise).resolves.toBe("ok");
     expect(callback).toHaveBeenCalledTimes(2);
-    expect(console.warn).toHaveBeenCalledWith("[AI Retry] Attempt 1 failed.");
+    expect(console.warn).toHaveBeenCalledWith(
+      "[AI Retry] Attempt 1/3 failed:",
+      "boom"
+    );
   });
 
   it("attempts exactly `retries` times before rejecting", async () => {
@@ -42,7 +45,10 @@ describe("retryAI", () => {
       .mockRejectedValueOnce(lastError);
 
     const promise = retryAI(callback, { retries: 2, delay: 10 });
-    const assertion = expect(promise).rejects.toBe(lastError);
+    const assertion = expect(promise).rejects.toMatchObject({
+      message: "AI call failed after 2 attempts.",
+      cause: lastError,
+    });
 
     await vi.advanceTimersByTimeAsync(10);
     await assertion;
@@ -54,7 +60,9 @@ describe("retryAI", () => {
     const callback = vi.fn().mockRejectedValue(new Error("boom"));
 
     const promise = retryAI(callback);
-    const assertion = expect(promise).rejects.toThrow("boom");
+    const assertion = expect(promise).rejects.toThrow(
+      "AI call failed after 3 attempts."
+    );
 
     await vi.advanceTimersByTimeAsync(2_000);
     await assertion;

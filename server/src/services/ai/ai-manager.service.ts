@@ -14,7 +14,7 @@ export interface AIResponse {
 }
 
 interface AskAIOptions {
-  userId: string;
+  userId?: string;
   prompt: string;
 }
 

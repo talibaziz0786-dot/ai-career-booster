@@ -1,4 +1,4 @@
-import { analyzeResume } from "../services/resume-api";
+import { analyzeResume } from "../services/resume.service";
 import { useResumeAnalysisStore } from "../store/resume-analysis-store";
 
 export const useResumeAnalyzer = () => {
@@ -15,12 +15,12 @@ export const useResumeAnalyzer = () => {
     try {
       setLoading(true);
 
-      const response =
+      const analysis =
         await analyzeResume(resumeText);
 
-      setResult(response.analysis);
+      setResult(analysis);
 
-      return response.analysis;
+      return analysis;
     } finally {
       setLoading(false);
     }

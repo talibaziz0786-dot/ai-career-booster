@@ -5,9 +5,6 @@ export default function ResumeScoreCard() {
     useResumeStore();
 
 
-
- const fields = Object.values(data);
-
 let score = 0;
 
 if (data.fullName) score += 10;

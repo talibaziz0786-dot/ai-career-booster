@@ -5,10 +5,12 @@ import { retry } from "../../../../src/services/ai/utils/retry.util.js";
 describe("retry", () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    vi.spyOn(console, "warn").mockImplementation(() => {});
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   it("resolves without retrying when the callback succeeds", async () => {
@@ -31,7 +33,7 @@ describe("retry", () => {
     expect(fn).toHaveBeenCalledTimes(2);
   });
 
-  it("makes retries + 1 attempts before rejecting with the last error", async () => {
+  it("makes retries + 1 attempts before rejecting with the last error as cause", async () => {
     const lastError = new Error("last");
     const fn = vi
       .fn()
@@ -39,7 +41,10 @@ describe("retry", () => {
       .mockRejectedValueOnce(lastError);
 
     const promise = retry(fn, 1, 100);
-    const assertion = expect(promise).rejects.toBe(lastError);
+    const assertion = expect(promise).rejects.toMatchObject({
+      message: "Operation failed after 2 attempts.",
+      cause: lastError,
+    });
 
     await vi.advanceTimersByTimeAsync(100);
     await assertion;
@@ -51,7 +56,9 @@ describe("retry", () => {
     const fn = vi.fn().mockRejectedValue(new Error("boom"));
 
     const promise = retry(fn);
-    const assertion = expect(promise).rejects.toThrow("boom");
+    const assertion = expect(promise).rejects.toThrow(
+      "Operation failed after 3 attempts."
+    );
 
     await vi.advanceTimersByTimeAsync(499);
     expect(fn).toHaveBeenCalledTimes(1);
@@ -68,7 +75,9 @@ describe("retry", () => {
   it("does not wait when retries are disabled", async () => {
     const fn = vi.fn().mockRejectedValue(new Error("boom"));
 
-    await expect(retry(fn, 0)).rejects.toThrow("boom");
+    await expect(retry(fn, 0)).rejects.toThrow(
+      "Operation failed after 1 attempts."
+    );
     expect(fn).toHaveBeenCalledTimes(1);
   });
 });
