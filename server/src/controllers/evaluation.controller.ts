@@ -32,7 +32,10 @@ Return response in JSON format:
 `;
 
     const result =
-      await askAI(prompt);
+      await askAI({
+        userId: (req as any).user?.id,
+        prompt,
+      });
 
     res.json({
       success: true,

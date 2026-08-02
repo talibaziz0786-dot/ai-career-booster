@@ -50,7 +50,9 @@ export async function careerIntelligenceController(
 
         cacheKey,
 
-        resumeText
+        resumeText,
+
+        (req as any).user?.id
 
       );
 

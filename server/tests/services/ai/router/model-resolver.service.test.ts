@@ -35,6 +35,15 @@ describe("getAIModel", () => {
     expect(findOne).toHaveBeenCalledWith({ user: "user-1" });
   });
 
+  it.each([undefined, ""])(
+    "returns the free tier without a lookup when the user id is %p",
+    async (userId) => {
+      await expect(getAIModel(userId)).resolves.toEqual(FREE_CONFIG);
+
+      expect(findOne).not.toHaveBeenCalled();
+    }
+  );
+
   it("falls back to the free tier when the user has no subscription", async () => {
     findOne.mockResolvedValue(null);
 

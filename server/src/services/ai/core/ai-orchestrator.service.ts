@@ -14,6 +14,8 @@ interface AIRequest {
 
   prompt: string;
 
+  userId?: string;
+
   language?: string;
 
   recruiterMode?: boolean;
@@ -39,6 +41,8 @@ export async function runAI({
   module,
 
   prompt,
+
+  userId,
 
   language = "english",
 
@@ -86,7 +90,13 @@ ${prompt}
 
   const response = await retryAI(async () => {
 
-    return await askAI(finalPrompt);
+    return await askAI({
+
+      userId,
+
+      prompt: finalPrompt,
+
+    });
 
   });
 
