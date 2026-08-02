@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 
+import { getAllowedOrigins } from "./config/env.js";
+
 import authRoutes from "./routes/auth.routes.js";
 import interviewRoutes from "./routes/interview.routes.js";
 import evaluationRoutes
@@ -41,15 +43,12 @@ const app = express();
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://192.168.1.5:5173",
-    ],
+    origin: getAllowedOrigins(),
     credentials: true,
   })
 );
 
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 
 app.use("/api/auth", authRoutes);
 

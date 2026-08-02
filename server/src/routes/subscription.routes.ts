@@ -8,7 +8,10 @@ import {
   resetDailyUsage,
 } from "../controllers/subscription.controller.js";
 
-import { authMiddleware } from "../middleware/auth.middleware.js";
+import {
+  authMiddleware,
+  adminMiddleware,
+} from "../middleware/auth.middleware.js";
 
 const router = Router();
 
@@ -39,6 +42,7 @@ router.put(
 router.put(
   "/reset-usage",
   authMiddleware,
+  adminMiddleware,
   resetDailyUsage
 );
 

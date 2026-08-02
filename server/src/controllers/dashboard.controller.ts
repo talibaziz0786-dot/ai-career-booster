@@ -1,15 +1,18 @@
-import type { Request, Response } from "express";
+import type { Response } from "express";
 import InterviewSession from "../models/interview-session.model.js";
+import type { AuthRequest } from "../middleware/auth.middleware.js";
 
 export const getDashboardStats =
 async (
-  req: Request,
+  req: AuthRequest,
   res: Response
 ) => {
   try {
 
     const interviews =
-      await InterviewSession.find();
+      await InterviewSession.find({
+        user: req.user!.id,
+      });
 
     const totalInterviews =
       interviews.length;

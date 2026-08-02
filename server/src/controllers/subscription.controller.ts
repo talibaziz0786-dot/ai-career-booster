@@ -1,5 +1,43 @@
+import crypto from "crypto";
+
 import type { Request, Response } from "express";
 import Subscription from "../models/subscription.model.js";
+
+import { requireEnv } from "../config/env.js";
+
+import {
+  PAID_PLANS,
+  isPaidPlan,
+} from "../config/plans.js";
+
+function verifyRazorpaySignature(
+  orderId: string,
+  paymentId: string,
+  signature: string
+) {
+  const expected = crypto
+    .createHmac(
+      "sha256",
+      requireEnv("RAZORPAY_KEY_SECRET")
+    )
+    .update(`${orderId}|${paymentId}`)
+    .digest("hex");
+
+  const expectedBuffer =
+    Buffer.from(expected, "utf8");
+
+  const providedBuffer =
+    Buffer.from(signature, "utf8");
+
+  return (
+    expectedBuffer.length ===
+      providedBuffer.length &&
+    crypto.timingSafeEqual(
+      expectedBuffer,
+      providedBuffer
+    )
+  );
+}
 
 export const getMySubscription = async (
   req: Request,
@@ -84,14 +122,51 @@ export const upgradePlan = async (
 
     const {
       plan,
-      expiresAt,
       razorpayOrderId,
       razorpayPaymentId,
       razorpaySignature,
       paymentMethod,
-      amountPaid,
-      currency,
-    } = req.body;
+    } = req.body ?? {};
+
+    if (!isPaidPlan(plan)) {
+      return res.status(400).json({
+        success: false,
+        message: "Unknown plan",
+      });
+    }
+
+    if (
+      typeof razorpayOrderId !== "string" ||
+      typeof razorpayPaymentId !== "string" ||
+      typeof razorpaySignature !== "string" ||
+      !verifyRazorpaySignature(
+        razorpayOrderId,
+        razorpayPaymentId,
+        razorpaySignature
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Payment verification failed",
+      });
+    }
+
+    const alreadyUsed =
+      await Subscription.findOne({
+        razorpayPaymentId,
+      });
+
+    if (alreadyUsed) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "Payment already processed",
+      });
+    }
+
+    const planDefinition =
+      PAID_PLANS[plan];
 
     const subscription =
       await Subscription.findOne({
@@ -110,8 +185,14 @@ export const upgradePlan = async (
 
     subscription.status = "active";
 
-    subscription.expiresAt =
-      expiresAt;
+    subscription.expiresAt = new Date(
+      Date.now() +
+        planDefinition.durationDays *
+          24 *
+          60 *
+          60 *
+          1000
+    );
 
     subscription.razorpayOrderId =
       razorpayOrderId;
@@ -123,13 +204,17 @@ export const upgradePlan = async (
       razorpaySignature;
 
     subscription.paymentMethod =
-      paymentMethod;
+      typeof paymentMethod === "string"
+        ? paymentMethod
+        : "razorpay";
 
     subscription.amountPaid =
-      amountPaid;
+      planDefinition.amount;
 
     subscription.currency =
-      currency;
+      planDefinition.currency;
+
+    subscription.paymentDate = new Date();
 
     await subscription.save();
 

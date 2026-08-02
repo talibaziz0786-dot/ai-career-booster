@@ -129,13 +129,25 @@ async (
 
   try {
 
+    const {
+      company,
+      role,
+      status,
+      notes,
+    } = req.body ?? {};
+
     const job =
       await JobApplication.findOneAndUpdate(
         {
           _id: req.params.id,
           user: req.user?.id,
         },
-        req.body,
+        {
+          company,
+          role,
+          status,
+          notes,
+        },
         {
           new: true,
         }
