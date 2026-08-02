@@ -6,13 +6,16 @@ import {
 }
 from "../middleware/auth.middleware.js";
 
-import { Response }
+import type { NextFunction, Response }
 from "express";
+
+import { AppError } from "../utils/errors.js";
 
 export const createJob =
 async (
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
 
   try {
@@ -43,11 +46,13 @@ async (
 
   } catch (error) {
 
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-    });
+    next(
+      new AppError(
+        "Unable to create job application",
+        500,
+        { cause: error }
+      )
+    );
 
   }
 
@@ -56,7 +61,8 @@ async (
 export const getJobs =
 async (
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
 
   try {
@@ -74,11 +80,13 @@ async (
 
   } catch (error) {
 
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-    });
+    next(
+      new AppError(
+        "Unable to fetch job applications",
+        500,
+        { cause: error }
+      )
+    );
 
   }
 
@@ -87,7 +95,8 @@ async (
 export const deleteJob =
 async (
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
 
   try {
@@ -111,11 +120,13 @@ async (
 
   } catch (error) {
 
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-    });
+    next(
+      new AppError(
+        "Unable to delete job application",
+        500,
+        { cause: error }
+      )
+    );
 
   }
 
@@ -124,7 +135,8 @@ async (
 export const updateJob =
 async (
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
 
   try {
@@ -145,6 +157,7 @@ async (
 
       return res.status(404).json({
         success: false,
+        message: "Job not found",
       });
 
     }
@@ -156,11 +169,13 @@ async (
 
   } catch (error) {
 
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-    });
+    next(
+      new AppError(
+        "Unable to update job application",
+        500,
+        { cause: error }
+      )
+    );
 
   }
 

@@ -9,6 +9,8 @@ import jwt from "jsonwebtoken";
 import { User }
 from "../models/user.model.js";
 
+import { AppError } from "../utils/errors.js";
+
 
 interface JwtPayload {
   id: string;
@@ -51,16 +53,21 @@ async (
     const token =
       authHeader.split(" ")[1];
 
-// console.log("TOKEN:", token);
-   console.log("JWT_SECRET:", process.env.JWT_SECRET);
+    const secret = process.env.JWT_SECRET;
+
+    if (!secret) {
+      throw new AppError(
+        "Authentication is not configured.",
+        500,
+        { expose: false }
+      );
+    }
 
     const decoded =
 jwt.verify(
         token,
-        process.env.JWT_SECRET!
+        secret
       ) as JwtPayload;
-
-      // console.log("DECODED:", decoded);
 
     const user =
       await User.findById(
@@ -82,12 +89,29 @@ jwt.verify(
 
   } catch (error) {
 
-     console.log("JWT ERROR:", error);
+    if (error instanceof jwt.TokenExpiredError) {
 
-    return res.status(401).json({
-      message:
-        "Invalid token",
-    });
+      return res.status(401).json({
+        message: "Token expired",
+      });
+
+    }
+
+    if (error instanceof jwt.JsonWebTokenError) {
+
+      return res.status(401).json({
+        message: "Invalid token",
+      });
+
+    }
+
+    return next(
+      new AppError(
+        "Authentication failed",
+        500,
+        { cause: error }
+      )
+    );
 
   }
 };

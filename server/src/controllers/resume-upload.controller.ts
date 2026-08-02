@@ -1,4 +1,10 @@
-import type { Request, Response } from "express";
+import type {
+  NextFunction,
+  Request,
+  Response,
+} from "express";
+
+import { AppError } from "../utils/errors.js";
 
 import { extractResumeText }
 from "../services/resume-parser.service.js";
@@ -6,7 +12,8 @@ from "../services/resume-parser.service.js";
 export const uploadResume =
 async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
 
   try {
@@ -35,16 +42,13 @@ async (
 
   } catch (error) {
 
-    console.error(error);
-
-    res.status(500).json({
-
-      success: false,
-
-      message:
+    next(
+      new AppError(
         "Resume parsing failed",
-
-    });
+        500,
+        { cause: error }
+      )
+    );
 
   }
 

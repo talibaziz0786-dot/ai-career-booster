@@ -1,5 +1,11 @@
 import { pdf } from "@react-pdf/renderer";
 
+import toast from "react-hot-toast";
+
+import {
+  getErrorMessage,
+} from "../../utils/getErrorMessage";
+
 import { useResumeStore } from "../../store/resume-store";
 
 import ResumePDFDocument from "./ResumePDFDocument";
@@ -35,9 +41,11 @@ export default function ExportButtons() {
 
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error(
-        "PDF Export Error:",
-        error
+      toast.error(
+        getErrorMessage(
+          error,
+          "PDF export failed"
+        )
       );
     }
   };

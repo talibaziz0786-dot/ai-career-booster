@@ -3,8 +3,13 @@ import {
   useState,
 } from "react";
 
+import toast from "react-hot-toast";
+
 import { api }
 from "../lib/axios";
+
+import { getErrorMessage }
+from "../utils/getErrorMessage";
 
 export function useDashboardStats() {
 
@@ -34,7 +39,12 @@ export function useDashboardStats() {
 
         } catch (error) {
 
-          console.error(error);
+          toast.error(
+            getErrorMessage(
+              error,
+              "Failed to load dashboard stats"
+            )
+          );
 
         }
 

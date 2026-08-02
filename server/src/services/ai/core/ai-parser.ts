@@ -8,8 +8,11 @@ export function parseAIJson<T>(
 
   try {
     return JSON.parse(json) as T;
-  } catch {
-    throw new Error("Invalid AI JSON");
+  } catch (error) {
+    throw new Error(
+      `Invalid AI JSON: ${json.slice(0, 500)}`,
+      { cause: error }
+    );
   }
 
 }
