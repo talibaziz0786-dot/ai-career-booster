@@ -1,15 +1,16 @@
-import type { Response } from "express";
 import type { AuthRequest } from "../middleware/auth.middleware.js";
 
 import { askAI } from "../services/ai/ai-manager.service.js";
 import { buildInterviewFeedbackPrompt } from "../prompts/interview-feedback.prompt.js";
+import {
+  asyncHandler,
+  sendError,
+  sendSuccess,
+} from "../utils/http-response.js";
+import { parseAIJson } from "../utils/json-parser.js";
 
-
-export const getQuestion = async (
-    req: AuthRequest,
-    res: Response
-) => {
-  try {
+export const getQuestion = asyncHandler<AuthRequest>(
+  async (req, res) => {
     const history = req.body.history || [];
     const skills = req.body.skills || [];
     const language = req.body.language || "english";
@@ -206,66 +207,26 @@ Do not return anything except JSON.
 `,
 });
 
-console.log(
-  "AI RESPONSE:",
+const parsed = parseAIJson(
   result.content
 );
 
-const rawText =
-  result.content || "";
+return sendSuccess(res, {
+  provider: result.provider,
 
-const jsonMatch =
-rawText.match(
-    /\{[\s\S]*\}/m
-);
+  model: result.model ?? null,
 
-if (!jsonMatch) {
-  throw new Error(
-    "No JSON returned"
-  );
-}
+  question: parsed.question,
 
-const parsed =
-  JSON.parse(
-    jsonMatch[0]
-  );
-
-return res.json({
-
-success:true,
-
-provider:
-result.provider,
-
-model:
-result.model ?? null,
-
-question:
-parsed.question,
-
-skill:
-parsed.skill,
-
+  skill: parsed.skill,
 });
 
-  } catch (error) {
-    console.error(error);
+  },
+  "Failed to generate question"
+);
 
-    res.status(500).json({
-      success: false,
-      message: "Failed to generate question",
-    });
-  }
-};
-
-
-
-export const generateFeedback = async (
-    req: AuthRequest,
-    res: Response
-) => {
-
-  try {
+export const generateFeedback = asyncHandler<AuthRequest>(
+  async (req, res) => {
 
         const {
       questions = [],
@@ -289,20 +250,6 @@ export const generateFeedback = async (
         ? answers
         : [];
 
-    console.log(
-      "QUESTIONS:",
-      safeQuestions
-    );
-
-    console.log(
-      "ANSWERS:",
-      safeAnswers
-    );
-
-    console.log(
-      "SKILLS:",
-      safeSkills
-    );
 const prompt = buildInterviewFeedbackPrompt({
   questions: safeQuestions,
   answers: safeAnswers,
@@ -315,32 +262,11 @@ const result = await askAI({
   prompt,
 });
 
-console.log(
-  "RAW AI FEEDBACK:",
-  result.content
-);
-
- let feedback;
+let feedback;
 
 try {
 
-  const rawText =
-    result.content || "";
-
-  const jsonMatch =
-rawText.match(
-    /\{[\s\S]*\}/m
-);
-
-  if (!jsonMatch) {
-    throw new Error(
-      "No JSON found in AI response"
-    );
-  }
-
-  feedback = JSON.parse(
-    jsonMatch[0]
-  );
+  feedback = parseAIJson(result.content);
 
 } catch (error) {
 
@@ -349,37 +275,21 @@ rawText.match(
     result.content
   );
 
-  return res.status(500).json({
-    success: false,
-    message:
-      "AI returned invalid JSON",
-  });
+  return sendError(
+    res,
+    500,
+    "AI returned invalid JSON"
+  );
 }
 
+return sendSuccess(res, {
+  provider: result.provider,
 
+  model: result.model ?? null,
 
-return res.json({
-
-success:true,
-
-provider:
-result.provider,
-
-model:
-result.model ?? null,
-
-feedback,
-
+  feedback,
 });
 
-
-
-  } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-      message: "Feedback generation failed",
-    });
-  }
-};
+  },
+  "Feedback generation failed"
+);

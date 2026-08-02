@@ -1,89 +1,65 @@
-import type { Request, Response } from "express";
+import type { Request } from "express";
+
 import InterviewSession from "../models/interview-session.model.js";
+import {
+  asyncHandler,
+  sendSuccess,
+} from "../utils/http-response.js";
 
-export const getDashboardStats =
-async (
-  req: Request,
-  res: Response
-) => {
-  try {
+function countOccurrences(values: string[]) {
+  return values.reduce<Record<string, number>>(
+    (counts, value) => {
+      counts[value] = (counts[value] || 0) + 1;
 
+      return counts;
+    },
+    {}
+  );
+}
+
+export const getDashboardStats = asyncHandler<Request>(
+  async (_req, res) => {
     const interviews =
       await InterviewSession.find();
 
-    const totalInterviews =
-      interviews.length;
+    const totalInterviews = interviews.length;
 
     const averageScore =
       totalInterviews > 0
         ? Math.round(
             interviews.reduce(
               (acc, item) =>
-                acc +
-                (item.overallScore || 0),
+                acc + (item.overallScore || 0),
               0
             ) / totalInterviews
           )
         : 0;
 
-    const strengthsMap:
-      Record<string, number> = {};
-
-    const weaknessesMap:
-      Record<string, number> = {};
-
-    interviews.forEach(
-      (session) => {
-
-        (session.strengths || [])
-          .forEach((item: string) => {
-
-            strengthsMap[item] =
-              (strengthsMap[item] || 0)
-              + 1;
-
-          });
-
-        (session.weaknesses || [])
-          .forEach((item: string) => {
-
-            weaknessesMap[item] =
-              (weaknessesMap[item] || 0)
-              + 1;
-
-          });
-
-      }
+    const strengthsMap = countOccurrences(
+      interviews.flatMap(
+        (session) => session.strengths || []
+      )
     );
 
-    const strongestArea =
-      Object.keys(
-        strengthsMap
-      )[0] || "N/A";
+    const weaknessesMap = countOccurrences(
+      interviews.flatMap(
+        (session) => session.weaknesses || []
+      )
+    );
 
-    const weakestArea =
-      Object.keys(
-        weaknessesMap
-      )[0] || "N/A";
-
-    res.json({
-      success: true,
-
+    return sendSuccess(res, {
       stats: {
         totalInterviews,
+
         averageScore,
-        strongestArea,
-        weakestArea,
+
+        strongestArea:
+          Object.keys(strengthsMap)[0] || "N/A",
+
+        weakestArea:
+          Object.keys(weaknessesMap)[0] ||
+          "N/A",
       },
     });
-
-  } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-    });
-
   }
-};
+);

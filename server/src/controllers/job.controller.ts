@@ -1,97 +1,51 @@
-import JobApplication
-from "../models/JobApplication.model.js";
+import JobApplication from "../models/JobApplication.model.js";
+
+import type { AuthRequest } from "../middleware/auth.middleware.js";
 
 import {
-  AuthRequest,
-}
-from "../middleware/auth.middleware.js";
+  asyncHandler,
+  sendError,
+  sendSuccess,
+} from "../utils/http-response.js";
 
-import { Response }
-from "express";
+export const createJob = asyncHandler<AuthRequest>(
+  async (req, res) => {
+    const job = await JobApplication.create({
+      user: req.user?.id,
 
-export const createJob =
-async (
-  req: AuthRequest,
-  res: Response
-) => {
+      company: req.body.company,
 
-  try {
+      role: req.body.role,
 
-    const job =
-      await JobApplication.create({
+      status: req.body.status,
 
-        user:
-          req.user?.id,
-
-        company:
-          req.body.company,
-
-        role:
-          req.body.role,
-
-        status:
-          req.body.status,
-
-        notes:
-          req.body.notes,
-      });
-
-    res.status(201).json({
-      success: true,
-      job,
+      notes: req.body.notes,
     });
 
-  } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-    });
-
+    return sendSuccess(
+      res,
+      {
+        job,
+      },
+      201
+    );
   }
+);
 
-};
+export const getJobs = asyncHandler<AuthRequest>(
+  async (req, res) => {
+    const jobs = await JobApplication.find({
+      user: req.user?.id,
+    });
 
-export const getJobs =
-async (
-  req: AuthRequest,
-  res: Response
-) => {
-
-  try {
-
-    const jobs =
-      await JobApplication.find({
-        user:
-          req.user?.id,
-      });
-
-    res.json({
-      success: true,
+    return sendSuccess(res, {
       jobs,
     });
-
-  } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-    });
-
   }
+);
 
-};
-
-export const deleteJob =
-async (
-  req: AuthRequest,
-  res: Response
-) => {
-
-  try {
-
+export const deleteJob = asyncHandler<AuthRequest>(
+  async (req, res) => {
     const job =
       await JobApplication.findOneAndDelete({
         _id: req.params.id,
@@ -99,36 +53,19 @@ async (
       });
 
     if (!job) {
-      return res.status(404).json({
-        success: false,
-        message: "Job not found",
-      });
+      return sendError(
+        res,
+        404,
+        "Job not found"
+      );
     }
 
-    res.json({
-      success: true,
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-    });
-
+    return sendSuccess(res);
   }
+);
 
-};
-
-export const updateJob =
-async (
-  req: AuthRequest,
-  res: Response
-) => {
-
-  try {
-
+export const updateJob = asyncHandler<AuthRequest>(
+  async (req, res) => {
     const job =
       await JobApplication.findOneAndUpdate(
         {
@@ -142,26 +79,11 @@ async (
       );
 
     if (!job) {
-
-      return res.status(404).json({
-        success: false,
-      });
-
+      return sendError(res, 404);
     }
 
-    res.json({
-      success: true,
+    return sendSuccess(res, {
       job,
     });
-
-  } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-    });
-
   }
-
-};
+);

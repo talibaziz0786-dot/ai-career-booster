@@ -1,15 +1,14 @@
-import { Request, Response } from "express";
-import { askAI } from "../services/ai/ai-manager.service.js";
+import type { Request } from "express";
 
-export const evaluateAnswer = async (
-  req: Request,
-  res: Response
-) => {
-  try {
-    const {
-      question,
-      answer,
-    } = req.body;
+import { askAI } from "../services/ai/ai-manager.service.js";
+import {
+  asyncHandler,
+  sendSuccess,
+} from "../utils/http-response.js";
+
+export const evaluateAnswer = asyncHandler<Request>(
+  async (req, res) => {
+    const { question, answer } = req.body;
 
     const prompt = `
 You are a Senior Technical Recruiter.
@@ -31,16 +30,10 @@ Return response in JSON format:
 }
 `;
 
-    const result =
-      await askAI(prompt);
+    const result = await askAI(prompt);
 
-    res.json({
-      success: true,
+    return sendSuccess(res, {
       result,
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-    });
   }
-};
+);

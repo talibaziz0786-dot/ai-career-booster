@@ -1,150 +1,76 @@
-import type { Request, Response, NextFunction } from "express";
-import Subscription from "../models/subscription.model.js";
+import type { NextFunction, Response } from "express";
 
-type Feature =
-  | "resume"
-  | "ats"
-  | "interview"
-  | "coverLetter";
+import type { AuthRequest } from "./auth.middleware.js";
+import { sendError } from "../utils/http-response.js";
+import {
+  clearDailyUsage,
+  FREE_PLAN_LIMITS,
+  getSubscriptionOr404,
+  isSameDay,
+  USAGE_FIELDS,
+  type UsageFeature,
+} from "../utils/subscription.util.js";
 
-const FREE_LIMITS = {
-  resume: 2,
-  ats: 2,
-  interview: 15,
-  coverLetter: 1,
-};
+const UNLIMITED_PLANS = [
+  "trial",
+  "pro-monthly",
+  "pro-yearly",
+];
 
 export const checkAIUsage =
-  (feature: Feature) =>
+  (feature: UsageFeature) =>
   async (
-    req: Request,
+    req: AuthRequest,
     res: Response,
     next: NextFunction
   ) => {
     try {
-      const user = (req as any).user;
-
       const subscription =
-        await Subscription.findOne({
-          user: user.id,
-        });
+        await getSubscriptionOr404(
+          res,
+          req.user!.id
+        );
 
       if (!subscription) {
-        return res.status(404).json({
-          success: false,
-          message: "Subscription not found",
-        });
+        return;
       }
-
-      // --------------------------
-      // Reset Daily Usage
-      // --------------------------
 
       const now = new Date();
 
-      const last =
-        new Date(subscription.usage.lastReset);
-
       if (
-        now.getDate() !== last.getDate() ||
-        now.getMonth() !== last.getMonth() ||
-        now.getFullYear() !==
-          last.getFullYear()
+        !isSameDay(
+          now,
+          new Date(
+            subscription.usage.lastReset
+          )
+        )
       ) {
-        subscription.usage.resumeToday = 0;
-        subscription.usage.atsToday = 0;
-        subscription.usage.interviewToday = 0;
-        subscription.usage.coverLetterToday = 0;
-
-        subscription.usage.lastReset =
-          now;
+        clearDailyUsage(
+          subscription,
+          now
+        );
 
         await subscription.save();
       }
 
-      // --------------------------
-      // Trial + Pro Unlimited
-      // --------------------------
-
       if (
-        subscription.plan === "trial" ||
-        subscription.plan ===
-          "pro-monthly" ||
-        subscription.plan ===
-          "pro-yearly"
+        UNLIMITED_PLANS.includes(
+          subscription.plan
+        )
       ) {
         return next();
       }
 
-      // --------------------------
-      // Free Plan Limit Check
-      // --------------------------
+      const field = USAGE_FIELDS[feature];
 
-      switch (feature) {
-        case "resume":
-          if (
-            subscription.usage.resumeToday >=
-            FREE_LIMITS.resume
-          ) {
-            return limitReached(
-              res,
-              feature
-            );
-          }
-
-          subscription.usage.resumeToday++;
-
-          break;
-
-        case "ats":
-          if (
-            subscription.usage.atsToday >=
-            FREE_LIMITS.ats
-          ) {
-            return limitReached(
-              res,
-              feature
-            );
-          }
-
-          subscription.usage.atsToday++;
-
-          break;
-
-        case "interview":
-          if (
-            subscription.usage
-              .interviewToday >=
-            FREE_LIMITS.interview
-          ) {
-            return limitReached(
-              res,
-              feature
-            );
-          }
-
-          subscription.usage
-            .interviewToday++;
-
-          break;
-
-        case "coverLetter":
-          if (
-            subscription.usage
-              .coverLetterToday >=
-            FREE_LIMITS.coverLetter
-          ) {
-            return limitReached(
-              res,
-              feature
-            );
-          }
-
-          subscription.usage
-            .coverLetterToday++;
-
-          break;
+      if (
+        subscription.usage[field] >=
+        FREE_PLAN_LIMITS[feature]
+      ) {
+        return limitReached(res, feature);
       }
+
+      subscription.usage[field]++;
 
       await subscription.save();
 
@@ -152,11 +78,11 @@ export const checkAIUsage =
     } catch (error) {
       console.error(error);
 
-      res.status(500).json({
-        success: false,
-        message:
-          "AI Usage Middleware Error",
-      });
+      sendError(
+        res,
+        500,
+        "AI Usage Middleware Error"
+      );
     }
   };
 

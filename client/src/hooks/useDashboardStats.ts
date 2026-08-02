@@ -1,48 +1,30 @@
-import {
-  useEffect,
-  useState,
-} from "react";
+import { useFetchOnMount } from "./useFetchOnMount";
 
-import { api }
-from "../lib/axios";
+interface DashboardStats {
+  totalInterviews: number;
+  averageScore: number;
+  strongestArea: string;
+  weakestArea: string;
+}
+
+interface DashboardStatsResponse {
+  stats: DashboardStats;
+}
 
 export function useDashboardStats() {
-
-  const [stats, setStats] =
-    useState({
+  const { data } = useFetchOnMount<
+    DashboardStats,
+    DashboardStatsResponse
+  >(
+    "/api/dashboard/stats",
+    {
       totalInterviews: 0,
       averageScore: 0,
       strongestArea: "N/A",
       weakestArea: "N/A",
-    });
+    },
+    (payload) => payload.stats
+  );
 
-  useEffect(() => {
-
-    const load =
-      async () => {
-
-        try {
-
-          const res =
-            await api.get(
-              "/api/dashboard/stats"
-            );
-
-          setStats(
-            res.data.stats
-          );
-
-        } catch (error) {
-
-          console.error(error);
-
-        }
-
-      };
-
-    load();
-
-  }, []);
-
-  return stats;
+  return data;
 }

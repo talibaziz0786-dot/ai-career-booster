@@ -1,9 +1,3 @@
-import { useState } from "react";
-
-import { useNavigate } from "react-router-dom";
-
-import toast from "react-hot-toast";
-
 import {
   useForm,
 } from "react-hook-form";
@@ -23,9 +17,7 @@ import {
   loginUser,
 } from "../services/auth.service";
 
-import {
-  useAuthStore,
-} from "../store/auth-store";
+import { useAuthSubmit } from "../hooks/useAuthSubmit";
 
 import AuthLayout from "../components/auth/AuthLayout";
 import { Link } from "react-router-dom";
@@ -33,15 +25,12 @@ import { Link } from "react-router-dom";
 
 
 export default function LoginPage() {
-  const navigate = useNavigate();
-
-  const login =
-    useAuthStore(
-      (state) => state.login
-    );
-
-  const [loading, setLoading] =
-    useState(false);
+  const { loading, onSubmit } =
+    useAuthSubmit<LoginInput>({
+      request: loginUser,
+      successMessage: "Login successful",
+      errorMessage: "Login failed",
+    });
 
   const {
     register,
@@ -53,40 +42,6 @@ export default function LoginPage() {
         loginSchema
       ),
   });
-
-  const onSubmit = async (
-    data: LoginInput
-  ) => {
-    try {
-      setLoading(true);
-
-      const response =
-        await loginUser(
-          data
-        );
-
-      login(
-        response.user,
-        response.token
-      );
-
-      toast.success(
-        "Login successful"
-      );
-
-      navigate(
-        "/dashboard"
-      );
-    } catch (error: any) {
-      toast.error(
-        error?.response?.data
-          ?.message ||
-          "Login failed"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
  <AuthLayout

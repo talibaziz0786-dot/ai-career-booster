@@ -1,50 +1,16 @@
-import {
-  useEffect,
-  useState,
-} from "react";
+import { useFetchOnMount } from "./useFetchOnMount";
 
-import { api }
-from "../lib/axios";
+interface JobsResponse {
+  jobs: unknown[];
+}
 
 export function useJobs() {
-
-  const [jobs,setJobs] =
-    useState([]);
-
-  const [loading,setLoading] =
-    useState(true);
-
-  useEffect(() => {
-
-    const fetchJobs =
-      async () => {
-
-        try {
-
-          const response =
-            await api.get(
-              "/api/jobs/all"
-            );
-
-          setJobs(
-            response.data.jobs
-          );
-
-        } catch(error) {
-
-          console.error(error);
-
-        } finally {
-
-          setLoading(false);
-
-        }
-
-      };
-
-    fetchJobs();
-
-  }, []);
+  const { data: jobs, loading } =
+    useFetchOnMount<unknown[], JobsResponse>(
+      "/api/jobs/all",
+      [],
+      (payload) => payload.jobs
+    );
 
   return {
     jobs,

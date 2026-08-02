@@ -16,6 +16,13 @@ interface AskAIOptions {
   prompt: string;
 }
 
+interface ProviderAttempt {
+  label: string;
+  generate: (
+    prompt: string
+  ) => Promise<AIResponse>;
+}
+
 export async function askAI({
   userId,
   prompt,
@@ -24,122 +31,66 @@ export async function askAI({
   const aiConfig =
     await getAIModel(userId);
 
-  const errors: unknown[] = [];
-
-  // ==========================
-  // PRIMARY MODEL
-  // ==========================
-
-  try {
-
-    console.log(
-      `Using ${aiConfig.primary}`
-    );
-
-    return await generateWithGemini(
-      prompt,
-      aiConfig.primary
-    );
-
-  } catch (error) {
-
-    console.error(
-      `${aiConfig.primary} Failed`
-    );
-
-    errors.push(error);
-
-  }
-
-  // ==========================
-  // GEMINI FALLBACK
-  // ==========================
+  const attempts: ProviderAttempt[] = [
+    {
+      label: aiConfig.primary,
+      generate: (input) =>
+        generateWithGemini(
+          input,
+          aiConfig.primary
+        ),
+    },
+  ];
 
   if (
-    aiConfig.primary !==
-    aiConfig.fallback
+    aiConfig.primary !== aiConfig.fallback
   ) {
+    attempts.push({
+      label: aiConfig.fallback,
+      generate: (input) =>
+        generateWithGemini(
+          input,
+          aiConfig.fallback
+        ),
+    });
+  }
+
+  attempts.push(
+    {
+      label: "DeepSeek",
+      generate: generateWithDeepSeek,
+    },
+    {
+      label: "Qwen",
+      generate: generateWithQwen,
+    },
+    {
+      label: "Local AI",
+      generate: generateWithLocalAI,
+    }
+  );
+
+  const errors: unknown[] = [];
+
+  for (const attempt of attempts) {
 
     try {
 
       console.log(
-        `Fallback → ${aiConfig.fallback}`
+        `Using ${attempt.label}`
       );
 
-      return await generateWithGemini(
-        prompt,
-        aiConfig.fallback
-      );
+      return await attempt.generate(prompt);
 
     } catch (error) {
 
       console.error(
-        `${aiConfig.fallback} Failed`
+        `${attempt.label} Failed`
       );
 
       errors.push(error);
 
     }
-
-  }
-
-  // ==========================
-  // DEEPSEEK
-  // ==========================
-
-  try {
-
-    console.log("Using DeepSeek");
-
-    return await generateWithDeepSeek(
-      prompt
-    );
-
-  } catch (error) {
-
-    console.error("DeepSeek Failed");
-
-    errors.push(error);
-
-  }
-
-  // ==========================
-  // QWEN
-  // ==========================
-
-  try {
-
-    console.log("Using Qwen");
-
-    return await generateWithQwen(
-      prompt
-    );
-
-  } catch (error) {
-
-    console.error("Qwen Failed");
-
-    errors.push(error);
-
-  }
-
-  // ==========================
-  // LOCAL AI
-  // ==========================
-
-  try {
-
-    console.log("Using Local AI");
-
-    return await generateWithLocalAI(
-      prompt
-    );
-
-  } catch (error) {
-
-    console.error("Local AI Failed");
-
-    errors.push(error);
 
   }
 

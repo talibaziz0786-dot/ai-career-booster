@@ -1,89 +1,33 @@
-import { Request, Response } from "express";
+import type { Request } from "express";
 
 import { generateCareerIntelligence } from "../services/ai/career-intelligence.service.js";
+import {
+  asyncHandler,
+  sendError,
+  sendSuccess,
+} from "../utils/http-response.js";
 
-export async function careerIntelligenceController(
+export const careerIntelligenceController = asyncHandler<Request>(
+  async (req, res) => {
+    const { resumeText, userId } = req.body;
 
-  req: Request,
-
-  res: Response
-
-) {
-
-  try {
-
-    const {
-
-      resumeText,
-
-      userId,
-
-    } = req.body;
-
-    if (
-
-      !resumeText ||
-
-      !userId
-
-    ) {
-
-      return res.status(400).json({
-
-        success: false,
-
-        message:
-
-          "resumeText and userId are required.",
-
-      });
-
+    if (!resumeText || !userId) {
+      return sendError(
+        res,
+        400,
+        "resumeText and userId are required."
+      );
     }
 
-    const cacheKey =
-
-      `career:${userId}`;
-
     const profile =
-
       await generateCareerIntelligence(
-
-        cacheKey,
-
+        `career:${userId}`,
         resumeText
-
       );
 
-    return res.json({
-
-      success: true,
-
+    return sendSuccess(res, {
       profile,
-
     });
-
-  }
-
-  catch (error) {
-
-    console.error(
-
-      "Career Intelligence Error:",
-
-      error
-
-    );
-
-    return res.status(500).json({
-
-      success: false,
-
-      message:
-
-        "Failed to generate career intelligence.",
-
-    });
-
-  }
-
-}
+  },
+  "Failed to generate career intelligence."
+);

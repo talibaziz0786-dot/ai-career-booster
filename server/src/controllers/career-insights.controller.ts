@@ -1,11 +1,14 @@
-import type { Request, Response } from "express";
-import { askAI } from "../services/ai/ai-manager.service.js";
+import type { Request } from "express";
 
-export const getCareerInsights = async (
-  req: Request,
-  res: Response
-) => {
-  try {
+import { askAI } from "../services/ai/ai-manager.service.js";
+import {
+  asyncHandler,
+  sendSuccess,
+} from "../utils/http-response.js";
+import { parseAIJson } from "../utils/json-parser.js";
+
+export const getCareerInsights = asyncHandler<Request>(
+  async (req, res) => {
     const {
       overallScore,
       strengths,
@@ -33,31 +36,9 @@ Return ONLY JSON.
 }
 `);
 
-    const rawContent =
-  result.content ?? "";
-
-const jsonMatch =
-  rawContent.match(/\{[\s\S]*\}/);
-
-    if (!jsonMatch) {
-      throw new Error("Invalid AI response");
-    }
-
-    res.json({
-      success: true,
-      insights: JSON.parse(jsonMatch[0]),
+    return sendSuccess(res, {
+      insights: parseAIJson(result.content),
     });
-
-  } catch (error) {
-
-   console.error(
-    "Career Insight Error:",
-    error
-  );
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to generate insights",
-    });
-  }
-};
+  },
+  "Failed to generate insights"
+);
