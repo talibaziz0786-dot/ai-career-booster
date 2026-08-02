@@ -1,11 +1,13 @@
 import jwt from "jsonwebtoken";
 
+import { requireEnv } from "../config/env.js";
+
 export const generateToken = (
   id: string
 ) => {
   return jwt.sign(
     { id },
-    process.env.JWT_SECRET as string,
+    requireEnv("JWT_SECRET"),
     {
       expiresIn: "7d",
     }

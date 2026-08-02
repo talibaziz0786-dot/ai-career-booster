@@ -4,13 +4,57 @@ import type { Request, Response } from "express";
 import { User } from "../models/user.model.js";
 import { generateToken } from "../utils/generateToken.js";
 import Subscription from "../models/subscription.model.js";
+import type { AuthRequest } from "../middleware/auth.middleware.js";
+
+const EMAIL_PATTERN =
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const MIN_PASSWORD_LENGTH = 8;
+
+function normalizeCredentials(body: unknown) {
+  const { email, password, name } =
+    (body ?? {}) as Record<string, unknown>;
+
+  if (
+    typeof email !== "string" ||
+    typeof password !== "string" ||
+    !EMAIL_PATTERN.test(email.trim())
+  ) {
+    return null;
+  }
+
+  return {
+    email: email.trim(),
+    password,
+    name:
+      typeof name === "string"
+        ? name.trim()
+        : "",
+  };
+}
 
 export const registerUser = async (
   req: Request,
   res: Response
 ) => {
   try {
-    const { name, email, password } = req.body;
+    const credentials =
+      normalizeCredentials(req.body);
+
+    if (
+      !credentials ||
+      !credentials.name ||
+      credentials.password.length <
+        MIN_PASSWORD_LENGTH
+    ) {
+      return res.status(400).json({
+        message:
+          "Name, a valid email and a password of at least 8 characters are required",
+      });
+    }
+
+    const { name, email, password } =
+      credentials;
 
     const existingUser =
       await User.findOne({ email });
@@ -59,7 +103,17 @@ export const loginUser = async (
   res: Response
 ) => {
   try {
-    const { email, password } = req.body;
+    const credentials =
+      normalizeCredentials(req.body);
+
+    if (!credentials) {
+      return res.status(401).json({
+        message: "Invalid credentials",
+      });
+    }
+
+    const { email, password } =
+      credentials;
 
     const user =
       await User.findOne({ email });
@@ -98,8 +152,18 @@ export const loginUser = async (
 };
 
 export const getMe = async (
-  req: any,
+  req: AuthRequest,
   res: Response
 ) => {
-  res.status(200).json(req.user);
+  const user = await User.findById(
+    req.user!.id
+  ).select("-password");
+
+  if (!user) {
+    return res.status(404).json({
+      message: "User not found",
+    });
+  }
+
+  res.status(200).json(user);
 };

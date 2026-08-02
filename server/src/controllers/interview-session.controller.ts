@@ -14,11 +14,17 @@ async (
 ) => {
   try {
 
+    const { user, _id, ...payload } =
+      (req.body ?? {}) as Record<
+        string,
+        unknown
+      >;
+
     const session =
       await InterviewSession.create({
-        user: req.user?.id,
+        ...payload,
 
-        ...req.body,
+        user: req.user?.id,
       });
 
     res.status(201).json({
