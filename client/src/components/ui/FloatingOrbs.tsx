@@ -1,9 +1,26 @@
+import GradientOrb from "./GradientOrb";
+
 export default function FloatingOrbs() {
   return (
     <>
-      <div className="pointer-events-none fixed left-[-150px] top-[200px] h-[350px] w-[350px] rounded-full bg-cyan-500/10 blur-[120px]" />
+      <GradientOrb
+        color="cyan"
+        size="lg"
+        blur="strong"
+        opacity="low"
+        animated
+        className="fixed -left-40 top-48"
+      />
 
-      <div className="pointer-events-none fixed right-[-150px] top-[400px] h-[350px] w-[350px] rounded-full bg-violet-500/10 blur-[120px]" />
+      <GradientOrb
+        color="violet"
+        size="lg"
+        blur="strong"
+        opacity="low"
+        animated
+        delay={2}
+        className="fixed -right-40 top-[400px]"
+      />
     </>
   );
 }

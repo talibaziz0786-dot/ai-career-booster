@@ -1,16 +1,20 @@
 import { Link } from "react-router-dom";
 import { Menu, Moon, Sun } from "lucide-react";
 import { useState } from "react";
-import { useThemeStore } from "../../store/theme-store";
+import { useSettingsStore } from "../../store/settings-store";
 import { useAuthStore } from "../../store/auth-store";
 
 export default function Navbar() {
-  const { theme, toggleTheme } = useThemeStore();
+  const { settings, toggleTheme } = useSettingsStore();
 
   const [isOpen, setIsOpen] = useState(false);
 
   const isAuthenticated = useAuthStore(
     (state) => state.isAuthenticated
+  );
+
+  const user = useAuthStore(
+    (state) => state.user
   );
 
   const logout = useAuthStore(
@@ -96,7 +100,7 @@ export default function Navbar() {
               onClick={toggleTheme}
               className="rounded-xl border border-slate-300 p-2 text-slate-900 dark:border-white/10 dark:text-white"
             >
-              {theme === "dark" ? (
+              {settings.darkMode ? (
                 <Sun size={18} />
               ) : (
                 <Moon size={18} />
@@ -121,6 +125,15 @@ export default function Navbar() {
               </>
             ) : (
               <>
+                {user?.role === "admin" && (
+                  <Link
+                    to="/admin"
+                    className="hidden rounded-xl bg-purple-600 px-4 py-2 text-white md:block"
+                  >
+                    Admin Panel
+                  </Link>
+                )}
+
                 <Link
                   to="/dashboard"
                   className="hidden rounded-xl bg-cyan-500 px-5 py-2 text-white md:block"
@@ -228,7 +241,7 @@ export default function Navbar() {
 
       <Link
         to="/dashboard"
-        className="text-white"
+        className="text-next-white"
       >
         Dashboard
       </Link>

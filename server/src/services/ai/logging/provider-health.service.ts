@@ -1,73 +1,53 @@
 import type {
+  AIProvider,
+  ProviderHealth,
+} from "../../../lib/ai/types/ai.types.js";
 
-AIProvider,
-
-ProviderHealth,
-
-} from "../types/ai.types.js";
-
-const healthMap =
-
-new Map<AIProvider,ProviderHealth>();
+const healthMap = new Map<AIProvider, ProviderHealth>();
 
 export function updateProviderHealth(
+  provider: AIProvider,
+  success: boolean,
+  responseTime: number
+): void {
+  const current =
+    healthMap.get(provider) ?? {
+      provider,
+      healthy: true,
+      lastCheck: new Date(),
+      averageResponseTime: 0,
+      totalRequests: 0,
+      failedRequests: 0,
+      successRate: 100,
+    };
 
-provider:AIProvider,
+  current.totalRequests++;
 
-success:boolean,
+  if (!success) {
+    current.failedRequests++;
+  }
 
-responseTime:number
+  current.averageResponseTime =
+    current.totalRequests === 1
+      ? responseTime
+      : (
+          current.averageResponseTime *
+            (current.totalRequests - 1) +
+          responseTime
+        ) /
+        current.totalRequests;
 
-){
+  current.successRate =
+    ((current.totalRequests - current.failedRequests) /
+      current.totalRequests) *
+    100;
 
-const current=
+  current.healthy = current.successRate > 70;
+  current.lastCheck = new Date();
 
-healthMap.get(provider)??{
-
-provider,
-
-healthy:true,
-
-averageResponseTime:0,
-
-totalRequests:0,
-
-failedRequests:0,
-
-successRate:100,
-
-};
-
-current.totalRequests++;
-
-if(!success){
-
-current.failedRequests++;
-
+  healthMap.set(provider, current);
 }
 
-current.averageResponseTime=
-
-(current.averageResponseTime+
-
-responseTime)/2;
-
-current.successRate=
-
-((current.totalRequests-current.failedRequests)
-
-/current.totalRequests)*100;
-
-current.healthy=
-
-current.successRate>70;
-
-healthMap.set(provider,current);
-
-}
-
-export function getProviderHealth(){
-
-return [...healthMap.values()];
-
+export function getProviderHealth(): ProviderHealth[] {
+  return [...healthMap.values()];
 }

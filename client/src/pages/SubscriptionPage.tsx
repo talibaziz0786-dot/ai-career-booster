@@ -31,8 +31,6 @@ const proFeatures = [
 export default function SubscriptionPage() {
   const {
   plan,
-  status,
-  trialEnd,
   setSubscription,
 } =
 useSubscriptionStore();

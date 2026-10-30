@@ -2,7 +2,7 @@ import type {
 
 AIProvider,
 
-} from "../types/ai.types.js";
+} from "../../../lib/ai/types/ai.types.js";
 
 export function logAIRequest(
 

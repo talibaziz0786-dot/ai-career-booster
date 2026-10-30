@@ -20,6 +20,10 @@ import { generateResume } from "../../services/resume-builder.service";
 import { mapAIResumeToResumeData } from "../../utils/resumeMapper";
 
 import FormSection from "./form/FormSection";
+import {
+  saveResumeSnapshot,
+  ResumeHistoryStorageError,
+} from "../../services/resume-history.service";
 
 
 
@@ -31,6 +35,7 @@ const {
   data,
   updateData,
   setAIResume,
+  
   setLastSaved,
   lastSaved,
 } = useResumeStore();
@@ -44,18 +49,94 @@ const handleGenerateResume = async () => {
       language: "english",
     });
 
-    const mapped =
+    /*
+     * AI only enhances/generates the relevant
+     * resume sections.
+     *
+     * DO NOT replace the entire user's resume
+     * with AI output.
+     */
+    const mappedAI =
       mapAIResumeToResumeData(result);
 
-    updateData(mapped);
+    /*
+     * Critical:
+     *
+     * Preserve the user's existing information
+     * and merge only valid AI-generated fields.
+     *
+     * This prevents personal information,
+     * photo, education, etc. from disappearing.
+     */
+    const finalResume = {
+      ...data,
 
-    setAIResume(mapped);
-      alert("✅ AI Resume Generated Successfully");
+      summary:
+        mappedAI.summary?.trim()
+          ? mappedAI.summary
+          : data.summary,
 
+      skills:
+        mappedAI.skills?.trim()
+          ? mappedAI.skills
+          : data.skills,
+
+      experience:
+        mappedAI.experience?.trim()
+          ? mappedAI.experience
+          : data.experience,
+
+      projects:
+        mappedAI.projects?.trim()
+          ? mappedAI.projects
+          : data.projects,
+
+      achievements:
+        mappedAI.achievements?.trim()
+          ? mappedAI.achievements
+          : data.achievements,
+    };
+
+    /*
+     * Update current resume.
+     */
+    updateData(finalResume);
+
+    setAIResume(finalResume);
+
+    /*
+     * Save COMPLETE resume snapshot
+     * locally for Resume History.
+     *
+     * MongoDB is NOT used here.
+     */
+    try {
+      saveResumeSnapshot(finalResume);
+    } catch (error) {
+      if (
+        error instanceof
+        ResumeHistoryStorageError
+      ) {
+        alert(
+          "AI Resume created successfully, but Resume History storage is full. Delete an old history version to save this new version."
+        );
+      } else {
+        throw error;
+      }
+    }
+
+    alert(
+      "✅ AI Resume Generated Successfully"
+    );
   } catch (error) {
-    console.error(error);
+    console.error(
+      "Resume generation failed:",
+      error
+    );
 
-    alert("Resume generation failed.");
+    alert(
+      "Resume generation failed. Please try again."
+    );
   } finally {
     setLoading(false);
   }

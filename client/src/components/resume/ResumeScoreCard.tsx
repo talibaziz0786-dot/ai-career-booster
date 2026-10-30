@@ -6,7 +6,6 @@ export default function ResumeScoreCard() {
 
 
 
- const fields = Object.values(data);
 
 let score = 0;
 

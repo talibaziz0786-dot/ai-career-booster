@@ -1,44 +1,100 @@
-import { askAI } from "./ai/ai-manager.service.js";
-import { parseAIJson } from "../utils/json-parser.js";
+﻿import {
+  askAI,
+} from "../lib/ai/ai-orchestrator.js";
 
-export async function analyzeResumeAI(
-  resumeText: string
+import {
+  buildResumeAnalysisPrompt,
+} from "./ai/prompts/resume-analysis.prompt.js";
+
+/* ==========================================================
+   Resume Analysis Service
+========================================================== */
+
+export async function analyzeResumeWithAI(
+  userId: string,
+  resumeText: string,
+  language: string = "english"
 ) {
+  if (!userId) {
+    throw new Error(
+      "User ID is required for resume analysis."
+    );
+  }
 
-  const prompt = `
-You are the world's most advanced AI Career Coach,
-Senior Global Recruiter,
-Hiring Director,
-ATS Expert,
-Career Strategist,
-HR Leader,
-Industry Mentor,
-Executive Coach.
+  if (
+    !resumeText?.trim()
+  ) {
+    throw new Error(
+      "Resume text cannot be empty."
+    );
+  }
 
-Analyze the resume deeply.
+  const prompt =
+    buildResumeAnalysisPrompt(
+      resumeText,
+      language
+    );
 
-Resume
+  const aiResponse =
+    await askAI({
+      userId,
+      prompt,
+    });
 
-${resumeText}
+  const rawContent =
+    aiResponse.content
+      ?.trim() || "";
 
-Return ONLY VALID JSON.
+  if (!rawContent) {
+    throw new Error(
+      "AI returned an empty resume analysis response."
+    );
+  }
 
-Do NOT use markdown.
-
-Do NOT explain.
-
-Never write anything outside JSON.
-
-JSON must start with {
-
-JSON must end with }
-
-`;
-
-  const ai =
-    await askAI(prompt);
-
-  return parseAIJson(
-    ai.content
+  console.log(
+    "========== AI RESUME ANALYSIS =========="
   );
+
+  console.log(
+    rawContent
+  );
+
+  console.log(
+    "========================================"
+  );
+
+  /* ========================================================
+     Extract JSON Object
+  ======================================================== */
+
+  const jsonMatch =
+    rawContent.match(
+      /\{[\s\S]*\}/
+    );
+
+  if (!jsonMatch) {
+    throw new Error(
+      "AI did not return valid JSON."
+    );
+  }
+
+  try {
+    return JSON.parse(
+      jsonMatch[0]
+    );
+  } catch (error) {
+    console.error(
+      "Resume Analysis JSON Parse Error:",
+      error
+    );
+
+    console.error(
+      "Resume Analysis Raw Response:",
+      rawContent
+    );
+
+    throw new Error(
+      "Unable to parse Resume Analysis JSON."
+    );
+  }
 }

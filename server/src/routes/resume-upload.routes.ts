@@ -13,7 +13,7 @@ import {
 } from "../controllers/resume-upload.controller.js";
 
 const router =
-express.Router();
+  express.Router();
 
 router.post(
   "/",

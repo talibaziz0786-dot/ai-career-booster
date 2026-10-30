@@ -1,6 +1,11 @@
-import { useState } from "react";
+import {
+  useState,
+} from "react";
 
-import { useNavigate } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+} from "react-router-dom";
 
 import toast from "react-hot-toast";
 
@@ -16,10 +21,11 @@ import Input from "../components/ui/Input";
 
 import {
   loginSchema,
- type LoginInput,
+  type LoginInput,
 } from "../validations/auth.schema";
 
 import {
+  getAccessToken,
   loginUser,
 } from "../services/auth.service";
 
@@ -28,12 +34,14 @@ import {
 } from "../store/auth-store";
 
 import AuthLayout from "../components/auth/AuthLayout";
-import { Link } from "react-router-dom";
 
-
+/* ==========================================================
+   Component
+========================================================== */
 
 export default function LoginPage() {
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
 
   const login =
     useAuthStore(
@@ -46,17 +54,30 @@ export default function LoginPage() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
-  } = useForm<LoginInput>({
-    resolver:
-      zodResolver(
-        loginSchema
-      ),
-  });
+    formState: {
+      errors,
+    },
+  } =
+    useForm<LoginInput>({
+      resolver:
+        zodResolver(
+          loginSchema
+        ),
+
+      mode: "onTouched",
+    });
+
+  /* ========================================================
+     Submit
+  ======================================================== */
 
   const onSubmit = async (
     data: LoginInput
   ) => {
+    if (loading) {
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -65,86 +86,203 @@ export default function LoginPage() {
           data
         );
 
+      /* ====================================================
+         Validate Authentication Response
+      ==================================================== */
+
+      const token =
+        getAccessToken(
+          response
+        );
+
+      if (!token) {
+        throw new Error(
+          "Login succeeded but no access token was returned."
+        );
+      }
+
+      if (!response.user) {
+        throw new Error(
+          "Login succeeded but user information was not returned."
+        );
+      }
+
+      /* ====================================================
+         Update Auth Store
+      ==================================================== */
+
       login(
         response.user,
-        response.token
+        token
       );
 
+      /* ====================================================
+         Success
+      ==================================================== */
+
       toast.success(
-        "Login successful"
+        "Login successful."
       );
 
       navigate(
-        "/dashboard"
+        "/dashboard",
+        {
+          replace: true,
+        }
       );
-    } catch (error: any) {
-      toast.error(
-        error?.response?.data
-          ?.message ||
-          "Login failed"
-      );
+    } catch (error: unknown) {
+      let message =
+        "Login failed. Please try again.";
+
+      if (
+        error &&
+        typeof error === "object" &&
+        "response" in error
+      ) {
+        const response =
+          (
+            error as {
+              response?: {
+                data?: {
+                  message?: unknown;
+                };
+              };
+            }
+          ).response;
+
+        const serverMessage =
+          response?.data?.message;
+
+        if (
+          typeof serverMessage ===
+          "string" &&
+          serverMessage.trim()
+        ) {
+          message =
+            serverMessage;
+        }
+      } else if (
+        error instanceof Error &&
+        error.message.trim()
+      ) {
+        message =
+          error.message;
+      }
+
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
 
+  /* ========================================================
+     Render
+  ======================================================== */
+
   return (
- <AuthLayout
-  title="Welcome Back"
-  subtitle="Continue building your career"
->
-
-   <form
-  onSubmit={handleSubmit(onSubmit)}
-  className="mt-8 space-y-4"
->
-  <Input
-    placeholder="Email Address"
-    {...register("email")}
-    error={errors.email?.message}
-  />
-
-  <Input
-    type="password"
-    placeholder="Password"
-    {...register("password")}
-    error={errors.password?.message}
-  />
-
-  <button
-    type="submit"
-    disabled={loading}
-    className="
-    w-full
-    rounded-xl
-    bg-cyan-500
-    py-3
-    font-semibold
-    text-white
-    hover:bg-cyan-400
-    transition
-    "
-  >
-    {loading ? "Signing In..." : "Login"}
-  </button>
-</form>
-
-    <div className="mt-5 flex justify-between">
-      <Link
-        to="/register"
-        className="text-cyan-500"
+    <AuthLayout
+      title="Welcome Back"
+      subtitle="Continue building your career"
+    >
+      <form
+        onSubmit={handleSubmit(
+          onSubmit
+        )}
+        noValidate
+        className="mt-8 space-y-4"
       >
-        Create account
-      </Link>
+        <Input
+          type="email"
+          placeholder="Email Address"
+          autoComplete="email"
+          {...register("email")}
+          error={
+            errors.email?.message
+          }
+        />
 
-      <button
-        type="button"
-        className="text-cyan-500"
+        <Input
+          type="password"
+          placeholder="Password"
+          autoComplete="current-password"
+          {...register("password")}
+          error={
+            errors.password?.message
+          }
+        />
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="
+            w-full
+            min-h-12
+            rounded-xl
+            bg-cyan-500
+            px-4
+            py-3
+            font-semibold
+            text-white
+            transition
+            hover:bg-cyan-400
+            focus:outline-none
+            focus:ring-2
+            focus:ring-cyan-500
+            focus:ring-offset-2
+            disabled:cursor-not-allowed
+            disabled:opacity-60
+            dark:focus:ring-offset-slate-950
+          "
+        >
+          {loading
+            ? "Signing In..."
+            : "Login"}
+        </button>
+      </form>
+
+      <div
+        className="
+          mt-5
+          flex
+          flex-col
+          gap-3
+          text-sm
+          sm:flex-row
+          sm:items-center
+          sm:justify-between
+        "
       >
-        Forgot Password?
-      </button>
-    </div>
+        <Link
+          to="/register"
+          className="
+            font-medium
+            text-cyan-500
+            transition
+            hover:text-cyan-400
+          "
+        >
+          Create account
+        </Link>
 
-  </AuthLayout>
-);
+        <button
+          type="button"
+          className="
+            text-left
+            font-medium
+            text-cyan-500
+            transition
+            hover:text-cyan-400
+            sm:text-right
+          "
+          onClick={() => {
+            toast(
+              "Password recovery will be available soon."
+            );
+          }}
+        >
+          Forgot Password?
+        </button>
+      </div>
+    </AuthLayout>
+  );
 }

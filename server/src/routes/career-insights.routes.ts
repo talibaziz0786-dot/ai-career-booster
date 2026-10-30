@@ -4,10 +4,15 @@ import {
   getCareerInsights,
 } from "../controllers/career-insights.controller.js";
 
+import {
+  authMiddleware,
+} from "../middleware/auth.middleware.js";
+
 const router = express.Router();
 
 router.post(
   "/generate",
+  authMiddleware,
   getCareerInsights
 );
 

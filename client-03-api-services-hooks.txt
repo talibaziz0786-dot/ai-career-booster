@@ -1,0 +1,6205 @@
+﻿============================================================
+CAREERBOOST AI CLIENT SOURCE SNAPSHOT
+SECTION: API SERVICES HOOKS LIB AND TYPES
+Generated: 2026-08-27 22:26:49
+Root: C:\Users\Rj\careerboost-ai\client
+============================================================
+
+===== FILE LIST =====
+src\api\settings.api.ts
+src\api\subscription.api.ts
+src\api\usage.api.ts
+src\hooks\cover-letter\useCoverLetter.ts
+src\hooks\interview\useInterviewFeedback.ts
+src\hooks\interview\useInterviewQuestion.ts
+src\hooks\interview\utils\interview.helpers.ts
+src\hooks\job\useJobQueries.ts
+src\hooks\job\useJobTracker.ts
+src\hooks\linkedin\useLinkedInOptimizer.ts
+src\hooks\useATSScore.ts
+src\hooks\useDashboardStats.ts
+src\hooks\useJobs.ts
+src\hooks\useOnlineStatus.ts
+src\hooks\useQueryHydration.ts
+src\hooks\useRecruiterSimulation.ts
+src\hooks\useResumeAnalysis.ts
+src\hooks\useResumeAnalytics.ts
+src\hooks\useResumeAnalyzer.ts
+src\hooks\useResumeUpload.ts
+src\hooks\useUserProfile.ts
+src\lib\axios.ts
+src\lib\react-query\query-persistence.ts
+src\lib\react-query\react-query.ts
+src\services\auth.service.ts
+src\services\cover-letter\cover-letter.api.ts
+src\services\dashboard\ats.service.ts
+src\services\dashboard\dashboard.service.ts
+src\services\interview\evaluationApi.ts
+src\services\interview\interview.api.ts
+src\services\job\job.api.ts
+src\services\linkedin\linkedin.api.ts
+src\services\resume.service.ts
+src\services\resume-builder.service.ts
+src\services\resume-history.service.ts
+src\services\user.service.ts
+src\types\career-memory.ts
+src\types\career-profile.ts
+src\types\cover-letter\cover-letter.types.ts
+src\types\interview\interview.types.ts
+src\types\job\job.types.ts
+src\types\linkedin\linkedin.types.ts
+src\types\resume-analysis.ts
+src\types\skill-trend.ts
+
+===== SOURCE CONTENT =====
+
+============================================================
+FILE: src\api\settings.api.ts
+============================================================
+import { api } from "../lib/axios";
+
+import type { ISettings } from "../store/settings-store";
+
+/* =========================================================
+   API Response Types
+========================================================= */
+
+interface SettingsApiResponse {
+  success: boolean;
+  message?: string;
+  settings: ISettings;
+}
+
+/* =========================================================
+   Get My Settings
+========================================================= */
+
+export async function getMySettings(): Promise<SettingsApiResponse> {
+  const { data } =
+    await api.get<SettingsApiResponse>(
+      "/api/settings/me",
+    );
+
+  return data;
+}
+
+/* =========================================================
+   Update My Settings
+========================================================= */
+
+export async function updateMySettings(
+  payload: Partial<ISettings>,
+): Promise<SettingsApiResponse> {
+  const { data } =
+    await api.put<SettingsApiResponse>(
+      "/api/settings/me",
+      payload,
+    );
+
+  return data;
+}
+
+============================================================
+FILE: src\api\subscription.api.ts
+============================================================
+import { api } from "../lib/axios";
+
+export interface SubscriptionData {
+  plan:
+    | "free"
+    | "trial"
+    | "pro-monthly"
+    | "pro-yearly";
+
+  status:
+    | "active"
+    | "expired"
+    | "cancelled";
+
+  trialEnd?: string;
+
+  expiresAt?: string;
+
+  usage: {
+    resumeToday: number;
+    atsToday: number;
+    interviewToday: number;
+    coverLetterToday: number;
+    lastReset: string;
+  };
+}
+
+export interface SubscriptionResponse {
+  success: boolean;
+  subscription: SubscriptionData;
+}
+
+export async function getSubscription() {
+  const { data } =
+    await api.get<SubscriptionResponse>(
+      "/api/subscription/me"
+    );
+
+  return data;
+}
+
+export async function startTrial() {
+  const { data } =
+    await api.post(
+      "/api/subscription/trial"
+    );
+
+  return data;
+}
+
+export async function upgradeToMonthly() {
+  const { data } =
+    await api.put(
+      "/api/subscription/upgrade",
+      {
+        plan: "pro-monthly",
+      }
+    );
+
+  return data;
+}
+
+export async function upgradeToYearly() {
+  const { data } =
+    await api.put(
+      "/api/subscription/upgrade",
+      {
+        plan: "pro-yearly",
+      }
+    );
+
+  return data;
+}
+
+export async function cancelSubscription() {
+  const { data } =
+    await api.put(
+      "/api/subscription/cancel"
+    );
+
+  return data;
+}
+
+export async function resetDailyUsage() {
+  const { data } =
+    await api.put(
+      "/api/subscription/reset-usage"
+    );
+
+  return data;
+}
+
+============================================================
+FILE: src\api\usage.api.ts
+============================================================
+import { api } from "../lib/axios";
+
+export interface UsageResponse {
+  success: boolean;
+
+  plan:
+    | "free"
+    | "trial"
+    | "pro-monthly"
+    | "pro-yearly";
+
+  status:
+    | "active"
+    | "expired"
+    | "cancelled";
+
+  usage: {
+    resumeToday: number;
+    atsToday: number;
+    interviewToday: number;
+    coverLetterToday: number;
+    lastReset: string;
+  };
+
+  limits: {
+    resume: number;
+    ats: number;
+    interview: number;
+    coverLetter: number;
+  } | null;
+
+  trialEnd?: string;
+
+  expiresAt?: string;
+}
+
+export async function getUsage() {
+  const { data } =
+    await api.get<UsageResponse>(
+      "/api/usage/me"
+    );
+
+  return data;
+}
+
+============================================================
+FILE: src\hooks\cover-letter\useCoverLetter.ts
+============================================================
+import { useCallback } from "react";
+
+import toast from "react-hot-toast";
+
+import {
+  CoverLetterAPI,
+} from "../../services/cover-letter/cover-letter.api";
+
+import {
+  useCoverLetterStore,
+} from "../../store/cover-letter-store";
+
+export function useCoverLetter() {
+  const {
+    input,
+
+    result,
+
+    history,
+
+    loading,
+
+    setLoading,
+
+    setResult,
+
+    addHistory,
+  } = useCoverLetterStore();
+
+  /* ==========================================================
+     Generate Cover Letter
+  ========================================================== */
+
+  const generateCoverLetter =
+    useCallback(async () => {
+      if (loading) {
+        return;
+      }
+
+      try {
+        setLoading(true);
+
+        const response =
+          await CoverLetterAPI.generateCoverLetter(
+            {
+              data: input,
+            }
+          );
+
+        if (!response.success) {
+          throw new Error(
+            response.message
+          );
+        }
+
+        setResult(
+          response.data
+        );
+
+        addHistory({
+          id: crypto.randomUUID(),
+
+          companyName:
+            input.companyName,
+
+          jobTitle:
+            input.jobTitle,
+
+          createdAt:
+            new Date().toISOString(),
+
+          result:
+            response.data,
+        });
+
+        toast.success(
+          "Cover Letter Generated Successfully"
+        );
+      } catch (error: any) {
+        console.error(error);
+
+        toast.error(
+          error?.message ??
+            "Unable to generate cover letter."
+        );
+      } finally {
+        setLoading(false);
+      }
+    }, [
+      loading,
+
+      input,
+
+      setLoading,
+
+      setResult,
+
+      addHistory,
+    ]);
+
+  /* ==========================================================
+     Refresh History
+  ========================================================== */
+
+  const loadHistory =
+    useCallback(async () => {
+      try {
+        const response =
+          await CoverLetterAPI.getCoverLetterHistory();
+
+        console.log(
+          response
+        );
+      } catch (error) {
+        console.error(error);
+      }
+    }, []);
+
+
+      /* ==========================================================
+     Delete Cover Letter
+  ========================================================== */
+
+  const deleteCoverLetter =
+    useCallback(async (id: string) => {
+      try {
+        await CoverLetterAPI.deleteCoverLetter(
+          id
+        );
+
+        toast.success(
+          "Cover Letter deleted."
+        );
+      } catch (error) {
+        console.error(error);
+
+        toast.error(
+          "Unable to delete cover letter."
+        );
+      }
+    }, []);
+
+  /* ==========================================================
+     Export PDF
+  ========================================================== */
+
+  const exportPDF =
+    useCallback(async (id: string) => {
+      try {
+        const blob =
+          await CoverLetterAPI.exportCoverLetterPDF(
+            id
+          );
+
+        const url =
+          window.URL.createObjectURL(blob);
+
+        const link =
+          document.createElement("a");
+
+        link.href = url;
+
+        link.download =
+          "cover-letter.pdf";
+
+        link.click();
+
+        window.URL.revokeObjectURL(
+          url
+        );
+
+        toast.success(
+          "PDF exported."
+        );
+      } catch (error) {
+        console.error(error);
+
+        toast.error(
+          "Unable to export PDF."
+        );
+      }
+    }, []);
+
+  /* ==========================================================
+     Export DOCX
+  ========================================================== */
+
+  const exportDOCX =
+    useCallback(async (id: string) => {
+      try {
+        const blob =
+          await CoverLetterAPI.exportCoverLetterDOCX(
+            id
+          );
+
+        const url =
+          window.URL.createObjectURL(blob);
+
+        const link =
+          document.createElement("a");
+
+        link.href = url;
+
+        link.download =
+          "cover-letter.docx";
+
+        link.click();
+
+        window.URL.revokeObjectURL(
+          url
+        );
+
+        toast.success(
+          "DOCX exported."
+        );
+      } catch (error) {
+        console.error(error);
+
+        toast.error(
+          "Unable to export DOCX."
+        );
+      }
+    }, []);
+
+  /* ==========================================================
+     Duplicate
+  ========================================================== */
+
+  const duplicate =
+    useCallback(async (id: string) => {
+      try {
+        await CoverLetterAPI.duplicateCoverLetter(
+          id
+        );
+
+        toast.success(
+          "Cover Letter duplicated."
+        );
+      } catch (error) {
+        console.error(error);
+
+        toast.error(
+          "Unable to duplicate."
+        );
+      }
+    }, []);
+
+  /* ==========================================================
+     Copy Generated Cover Letter
+  ========================================================== */
+
+  const copyToClipboard =
+    useCallback(async () => {
+      if (!result) {
+        return;
+      }
+
+      const text = `
+${result.greeting}
+
+${result.introduction}
+
+${result.body}
+
+${result.closing}
+
+${result.signature}
+`;
+
+      try {
+        await navigator.clipboard.writeText(
+          text
+        );
+
+        toast.success(
+          "Copied to clipboard."
+        );
+      } catch (error) {
+        console.error(error);
+
+        toast.error(
+          "Copy failed."
+        );
+      }
+    }, [result]);
+
+  /* ==========================================================
+     Public API
+  ========================================================== */
+
+  return {
+    input,
+
+    result,
+
+    history,
+
+    loading,
+
+    generateCoverLetter,
+
+    loadHistory,
+
+    deleteCoverLetter,
+
+    exportPDF,
+
+    exportDOCX,
+
+    duplicate,
+
+    copyToClipboard,
+  };
+}
+
+============================================================
+FILE: src\hooks\interview\useInterviewFeedback.ts
+============================================================
+import { useCallback } from "react";
+
+import { useNavigate } from "react-router-dom";
+
+import { useInterviewStore } from "../../store/interview-store";
+
+import {
+  InterviewAPI,
+} from "../../services/interview/interview.api";
+
+import toast from "react-hot-toast";
+
+export function useInterviewFeedback() {
+
+  const navigate =
+    useNavigate();
+
+  const {
+
+    category,
+
+    difficulty,
+
+    interviewType,
+
+    language,
+
+    history,
+
+    answers,
+
+    currentAnswer,
+
+    resumeSkills,
+
+    selectedSkills,
+
+    feedbackLoading,
+
+    setFeedbackLoading,
+
+    setCareerInsights,
+
+    setInterviewResult,
+
+    updateHistoryEvaluation,
+
+    endInterview,
+
+  } = useInterviewStore();
+
+  const generateInterviewResult =
+    useCallback(async () => {
+
+      if (
+        feedbackLoading
+      ) {
+        return;
+      }
+
+      try {
+
+        setFeedbackLoading(
+          true
+        );
+
+        /* =====================================
+           Answers
+        ===================================== */
+
+        const finalAnswers = [
+
+          ...answers,
+
+          ...(currentAnswer.trim()
+
+            ? [currentAnswer]
+
+            : []),
+
+        ];
+
+        /* =====================================
+           History
+        ===================================== */
+
+        const finalHistory =
+          history.map(
+            (item) => ({
+              ...item,
+            })
+          );
+
+        if (
+
+          currentAnswer.trim() &&
+
+          finalHistory.length > 0
+
+        ) {
+
+          finalHistory[
+            finalHistory.length - 1
+          ] = {
+
+            ...finalHistory[
+              finalHistory.length - 1
+            ],
+
+            answer:
+              currentAnswer,
+
+          };
+
+        }
+
+        if (
+          finalHistory.length === 0
+        ) {
+
+         toast.error(
+  "Interview history is empty."
+);
+
+return;
+        }
+
+        if (
+
+          finalHistory.some(
+            (item) =>
+              !item.answer?.trim()
+          )
+
+        ) {
+
+          toast.error(
+  "Please answer all questions before ending the interview."
+);
+
+return;
+
+        }
+
+        /* =====================================
+           Feedback
+        ===================================== */
+
+        const feedback =
+          await InterviewAPI.generateInterviewFeedback({
+
+            history:
+              finalHistory,
+
+            answers:
+              finalAnswers,
+
+            language,
+
+            skills:
+
+              selectedSkills.length > 0
+
+                ? selectedSkills
+
+                : resumeSkills,
+
+          });
+
+        setInterviewResult(
+          feedback.data
+        );
+
+        if (
+          finalHistory.length > 0
+        ) {
+
+          updateHistoryEvaluation(
+
+            finalHistory.length - 1,
+
+            {
+
+              score:
+                feedback.data.overallScore,
+
+              feedback:
+                feedback.data.recruiterVerdict,
+
+              strengths:
+                feedback.data.strengths,
+
+              weaknesses:
+                feedback.data.weaknesses,
+
+            }
+
+          );
+
+        }
+
+        /* =====================================
+           Career Insights
+        ===================================== */
+
+        const insights =
+          await InterviewAPI.generateCareerInsights({
+
+            overallScore:
+              feedback.data.overallScore,
+
+            strengths:
+              feedback.data.strengths,
+
+            weaknesses:
+              feedback.data.weaknesses,
+
+          });
+
+        setCareerInsights(
+          insights.insights
+        );
+
+        /* =====================================
+           Save Session
+        ===================================== */
+
+        await InterviewAPI.saveInterviewSession({
+
+          category,
+
+          difficulty,
+
+          interviewType,
+
+          language,
+
+          skills:
+
+            selectedSkills.length > 0
+
+              ? selectedSkills
+
+              : resumeSkills,
+
+          history:
+            finalHistory,
+
+          overallScore:
+            feedback.data.overallScore,
+
+          recruiterVerdict:
+            feedback.data.recruiterVerdict,
+
+          strengths:
+            feedback.data.strengths,
+
+          weaknesses:
+            feedback.data.weaknesses,
+
+          recommendations:
+            feedback.data.recommendations,
+
+        });
+
+        toast.success(
+  "Interview completed successfully."
+);
+
+endInterview();
+
+navigate(
+  "/interview-result"
+);
+
+      } catch (error) {
+
+       console.error(error);
+
+toast.error(
+  "Unable to generate interview report."
+);
+
+      } finally {
+
+        setFeedbackLoading(
+          false
+        );
+
+      }
+
+    }, [
+
+      answers,
+
+      category,
+
+      currentAnswer,
+
+      difficulty,
+
+      endInterview,
+
+      feedbackLoading,
+
+      history,
+
+      interviewType,
+
+      language,
+
+      navigate,
+
+      resumeSkills,
+
+      selectedSkills,
+
+      setCareerInsights,
+
+      setFeedbackLoading,
+
+      setInterviewResult,
+
+      updateHistoryEvaluation,
+
+    ]);
+
+  return {
+
+    generateInterviewResult,
+
+    feedbackLoading,
+
+  };
+
+}
+
+============================================================
+FILE: src\hooks\interview\useInterviewQuestion.ts
+============================================================
+import {
+  useCallback,
+} from "react";
+
+import {
+  useInterviewStore,
+} from "../../store/interview-store";
+
+import toast from "react-hot-toast";
+
+import {
+  InterviewAPI,
+} from "../../services/interview/interview.api";
+
+import {
+  showInterviewError,
+} from "../../utils/interview/interview-error";
+
+export function useInterviewQuestion() {
+  const {
+    category,
+    difficulty,
+    interviewType,
+    language,
+    customTopic,
+
+    history,
+
+    currentStep,
+    currentAnswer,
+
+    loading,
+    setLoading,
+
+    resumeSkills,
+    selectedSkills,
+
+    interviewStarted,
+    startInterview,
+
+    addAnswer,
+    updateHistoryAnswer,
+
+    addQuestion,
+    addHistoryItem,
+    createHistoryItem,
+
+    setQuestion,
+    setAnswer,
+
+    nextQuestion,
+  } = useInterviewStore();
+
+  /* =========================================================
+     Start Interview
+  ========================================================= */
+
+  const startInterviewSession =
+    useCallback(
+      async () => {
+        if (loading) {
+          return;
+        }
+
+        try {
+          setLoading(true);
+
+          const response =
+            await InterviewAPI.generateInterviewQuestion({
+              category,
+
+              difficulty,
+
+              interviewType,
+
+              language,
+
+              history: [],
+
+              skills:
+                customTopic
+                  ? [customTopic]
+                  : selectedSkills.length > 0
+                    ? selectedSkills
+                    : resumeSkills,
+            });
+
+          const question =
+            response.data;
+
+          if (
+            !question.question
+          ) {
+            throw new Error(
+              "Question not received."
+            );
+          }
+
+          addQuestion(
+            question.question
+          );
+
+          const historyItem =
+            createHistoryItem({
+              question:
+                question.question,
+
+              skill:
+                question.skill ??
+                (customTopic ? customTopic : (selectedSkills[0] ?? resumeSkills[0] ?? category)),
+
+              competencyId:
+                question.competencyId ??
+                "general",
+
+              competencyName:
+                question.competencyName ??
+                question.skill ??
+                "General",
+
+              difficulty,
+
+              provider:
+                question.provider ??
+                "Gemini",
+
+              model:
+                question.model ??
+                "gemini-2.5-flash",
+            });
+
+          addHistoryItem(
+            historyItem
+          );
+
+          setQuestion(
+            question.question
+          );
+
+          startInterview();
+
+          console.log(
+            "Interview Started",
+            {
+              interviewType,
+              question,
+            }
+          );
+        } catch (error) {
+          showInterviewError(
+            error
+          );
+        } finally {
+          setLoading(false);
+        }
+      },
+      [
+        addHistoryItem,
+        addQuestion,
+        category,
+        createHistoryItem,
+        customTopic,
+        difficulty,
+        interviewType,
+        language,
+        loading,
+        resumeSkills,
+        selectedSkills,
+        setLoading,
+        setQuestion,
+        startInterview,
+      ]
+    );
+
+  /* =========================================================
+     Generate Next Question
+  ========================================================= */
+
+  const generateNextQuestion =
+    useCallback(
+      async () => {
+        if (loading) {
+          return;
+        }
+
+        if (
+          !currentAnswer.trim()
+        ) {
+          toast.error(
+            "Please answer the current question first."
+          );
+
+          return;
+        }
+
+        addAnswer(
+          currentAnswer
+        );
+
+        updateHistoryAnswer(
+          currentStep - 1,
+          currentAnswer
+        );
+
+        try {
+          setLoading(true);
+
+          const response =
+            await InterviewAPI.generateInterviewQuestion({
+              category,
+
+              difficulty,
+
+              interviewType,
+
+              skills:
+                customTopic
+                  ? [customTopic]
+                  : selectedSkills.length > 0
+                    ? selectedSkills
+                    : resumeSkills,
+
+              language,
+
+              history,
+            });
+
+          const question =
+            response.data;
+
+          if (
+            !question.question
+          ) {
+            toast.error(
+              "Question generation failed."
+            );
+
+            return;
+          }
+
+          addQuestion(
+            question.question
+          );
+
+          const historyItem =
+            createHistoryItem({
+              question:
+                question.question,
+
+              skill:
+                question.skill ??
+                (customTopic ? customTopic : (selectedSkills[0] ?? resumeSkills[0] ?? category)),
+
+              competencyId:
+                question.competencyId ??
+                "general",
+
+              competencyName:
+                question.competencyName ??
+                question.skill ??
+                "General",
+
+              difficulty,
+
+              provider:
+                question.provider ??
+                "Gemini",
+
+              model:
+                question.model ??
+                "gemini-2.5-flash",
+            });
+
+          addHistoryItem(
+            historyItem
+          );
+
+          setQuestion(
+            question.question
+          );
+
+          setAnswer("");
+
+          nextQuestion();
+        } catch (error) {
+          showInterviewError(
+            error
+          );
+
+          toast.error(
+            "Unable to generate next question."
+          );
+        } finally {
+          setLoading(false);
+        }
+      },
+      [
+        addAnswer,
+        addHistoryItem,
+        addQuestion,
+        category,
+        createHistoryItem,
+        currentAnswer,
+        currentStep,
+        customTopic,
+        difficulty,
+        history,
+        interviewType,
+        language,
+        loading,
+        nextQuestion,
+        resumeSkills,
+        selectedSkills,
+        setAnswer,
+        setLoading,
+        setQuestion,
+        updateHistoryAnswer,
+      ]
+    );
+
+  return {
+    interviewStarted,
+
+    loading,
+
+    startInterviewSession,
+
+    generateNextQuestion,
+  };
+}
+
+
+============================================================
+FILE: src\hooks\interview\utils\interview.helpers.ts
+============================================================
+import { useInterviewStore } from "../../../store/interview-store";
+
+/* ===========================================================
+   Clone Interview History
+=========================================================== */
+
+export function cloneHistory() {
+  return useInterviewStore
+    .getState()
+    .history.map((item) => ({
+      ...item,
+    }));
+}
+
+/* ===========================================================
+   Attach Current Answer
+=========================================================== */
+
+export function attachCurrentAnswer(
+  currentAnswer: string
+) {
+  const history = cloneHistory();
+
+  if (
+    currentAnswer.trim() &&
+    history.length > 0
+  ) {
+    history[
+      history.length - 1
+    ] = {
+      ...history[
+        history.length - 1
+      ],
+      answer: currentAnswer,
+    };
+  }
+
+  return history;
+}
+
+/* ===========================================================
+   Validate History
+=========================================================== */
+
+export function validateHistory(
+  history: ReturnType<
+    typeof cloneHistory
+  >
+) {
+  if (history.length === 0) {
+    throw new Error(
+      "Interview history is empty."
+    );
+  }
+
+  const unanswered =
+    history.some(
+      (item) =>
+        !item.answer?.trim()
+    );
+
+  if (unanswered) {
+    throw new Error(
+      "Please answer the current question before ending the interview."
+    );
+  }
+}
+
+/* ===========================================================
+   Final Answers
+=========================================================== */
+
+export function buildFinalAnswers(
+  answers: string[],
+  currentAnswer: string
+) {
+  return [
+    ...answers,
+
+    ...(currentAnswer.trim()
+      ? [currentAnswer]
+      : []),
+  ];
+}
+
+============================================================
+FILE: src\hooks\job\useJobQueries.ts
+============================================================
+
+import {
+  useEffect,
+} from "react";
+
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+
+import { JobAPI } from "../../services/job/job.api";
+
+import type {
+  CreateJobRequest,
+  UpdateJobRequest,
+  JobItem,
+  JobStatus,
+} from "../../types/job/job.types";
+
+/* ==========================================================
+   Query Keys
+========================================================== */
+
+export const jobQueryKeys = {
+  all: ["jobs"] as const,
+
+  stats: ["job-dashboard"] as const,
+
+  detail: (
+    id: string
+  ) =>
+    [
+      "jobs",
+      "detail",
+      id,
+    ] as const,
+};
+
+/* ==========================================================
+   Cache Types
+========================================================== */
+
+type JobCache =
+  JobItem[];
+
+/* ==========================================================
+   Smart Cache Invalidation
+========================================================== */
+
+async function invalidateJobListAndStats(
+  queryClient: ReturnType<
+    typeof useQueryClient
+  >
+) {
+  await Promise.all([
+    queryClient.invalidateQueries({
+      queryKey:
+        jobQueryKeys.all,
+    }),
+
+    queryClient.invalidateQueries({
+      queryKey:
+        jobQueryKeys.stats,
+    }),
+  ]);
+}
+
+/* ==========================================================
+   Jobs Query
+========================================================== */
+
+export function useJobsQuery() {
+  return useQuery({
+    queryKey:
+      jobQueryKeys.all,
+
+    queryFn:
+      JobAPI.getJobs,
+
+    staleTime:
+      1000 * 60,
+
+    gcTime:
+      1000 * 60 * 30,
+
+    networkMode:
+      "offlineFirst",
+
+    refetchOnReconnect:
+      true,
+
+    refetchOnWindowFocus:
+      true,
+  });
+}
+
+/* ==========================================================
+   Dashboard Query
+========================================================== */
+
+export function useDashboardQuery() {
+  return useQuery({
+    queryKey:
+      jobQueryKeys.stats,
+
+    queryFn:
+      JobAPI.getDashboardStats,
+
+    staleTime:
+      1000 * 60,
+
+    gcTime:
+      1000 * 60 * 30,
+
+    networkMode:
+      "offlineFirst",
+
+    refetchOnReconnect:
+      true,
+
+    refetchOnWindowFocus:
+      true,
+  });
+}
+
+/* ==========================================================
+   Create Job Mutation
+========================================================== */
+
+export function useCreateJobMutation() {
+  const queryClient =
+    useQueryClient();
+
+  return useMutation({
+    mutationFn: (
+      payload: CreateJobRequest
+    ) =>
+      JobAPI.createJob(
+        payload
+      ),
+
+    /* ----------------------------------
+       Optimistic Preparation
+    ---------------------------------- */
+
+    onMutate: async () => {
+
+      await queryClient.cancelQueries({
+        queryKey:
+          jobQueryKeys.all,
+      });
+
+      const previousJobs =
+        queryClient.getQueryData<JobCache>(
+          jobQueryKeys.all
+        );
+
+      return {
+        previousJobs,
+      };
+    },
+
+    /* ----------------------------------
+       Rollback
+    ---------------------------------- */
+
+    onError: (
+      _error,
+      _payload,
+      context
+    ) => {
+
+      if (
+        context?.previousJobs
+      ) {
+        queryClient.setQueryData<JobCache>(
+          jobQueryKeys.all,
+          context.previousJobs
+        );
+      }
+    },
+
+    /* ----------------------------------
+       Server Success
+    ---------------------------------- */
+
+    onSuccess: async (
+      createdJob
+    ) => {
+
+      /*
+       * Keep individual detail cache
+       * immediately available.
+       */
+
+      queryClient.setQueryData<JobItem>(
+        jobQueryKeys.detail(
+          createdJob.id
+        ),
+        createdJob
+      );
+
+      /*
+       * Server is authoritative.
+       * Refresh affected collections.
+       */
+
+      await invalidateJobListAndStats(
+        queryClient
+      );
+    },
+
+    /* ----------------------------------
+       Final Synchronization
+    ---------------------------------- */
+
+    onSettled: async () => {
+
+      await queryClient.invalidateQueries({
+        queryKey:
+          jobQueryKeys.all,
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey:
+          jobQueryKeys.stats,
+      });
+    },
+  });
+}
+
+/* ==========================================================
+   Update Job Mutation
+========================================================== */
+
+export function useUpdateJobMutation() {
+  const queryClient =
+    useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+
+      payload: UpdateJobRequest;
+    }) =>
+      JobAPI.updateJob(
+        id,
+        payload
+      ),
+
+    /* ----------------------------------
+       Optimistic Update
+    ---------------------------------- */
+
+    onMutate: async ({
+      id,
+      payload,
+    }) => {
+
+      await queryClient.cancelQueries({
+        queryKey:
+          jobQueryKeys.all,
+      });
+
+      await queryClient.cancelQueries({
+        queryKey:
+          jobQueryKeys.detail(
+            id
+          ),
+      });
+
+      const previousJobs =
+        queryClient.getQueryData<JobCache>(
+          jobQueryKeys.all
+        );
+
+      const previousJob =
+        queryClient.getQueryData<JobItem>(
+          jobQueryKeys.detail(
+            id
+          )
+        );
+
+      /*
+       * Optimistically update list.
+       */
+
+      queryClient.setQueryData<JobCache>(
+        jobQueryKeys.all,
+        (
+          oldJobs
+        ) => {
+
+          if (!oldJobs) {
+            return oldJobs;
+          }
+
+          return oldJobs.map(
+            (
+              job
+            ) =>
+              job.id === id
+                ? {
+                    ...job,
+                    ...payload,
+                  }
+                : job
+          );
+        }
+      );
+
+      /*
+       * Optimistically update
+       * individual detail cache.
+       */
+
+      if (previousJob) {
+
+        queryClient.setQueryData<JobItem>(
+          jobQueryKeys.detail(
+            id
+          ),
+          {
+            ...previousJob,
+            ...payload,
+          }
+        );
+      }
+
+      return {
+        previousJobs,
+
+        previousJob,
+      };
+    },
+
+    /* ----------------------------------
+       Rollback
+    ---------------------------------- */
+
+    onError: (
+      _error,
+      variables,
+      context
+    ) => {
+
+      if (
+        context?.previousJobs
+      ) {
+
+        queryClient.setQueryData<JobCache>(
+          jobQueryKeys.all,
+          context.previousJobs
+        );
+      }
+
+      if (
+        context?.previousJob
+      ) {
+
+        queryClient.setQueryData<JobItem>(
+          jobQueryKeys.detail(
+            variables.id
+          ),
+          context.previousJob
+        );
+      }
+    },
+
+    /* ----------------------------------
+       Server Success
+    ---------------------------------- */
+
+    onSuccess: async (
+      updatedJob
+    ) => {
+
+      /*
+       * Server response becomes
+       * the source of truth.
+       */
+
+      queryClient.setQueryData<JobItem>(
+        jobQueryKeys.detail(
+          updatedJob.id
+        ),
+        updatedJob
+      );
+
+      await invalidateJobListAndStats(
+        queryClient
+      );
+    },
+
+    /* ----------------------------------
+       Final Synchronization
+    ---------------------------------- */
+
+    onSettled: async (
+      _data,
+      _error,
+      variables
+    ) => {
+
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey:
+            jobQueryKeys.all,
+        }),
+
+        queryClient.invalidateQueries({
+          queryKey:
+            jobQueryKeys.stats,
+        }),
+
+        queryClient.invalidateQueries({
+          queryKey:
+            jobQueryKeys.detail(
+              variables.id
+            ),
+        }),
+      ]);
+    },
+  });
+}
+
+/* ==========================================================
+   Delete Job Mutation
+========================================================== */
+
+export function useDeleteJobMutation() {
+  const queryClient =
+    useQueryClient();
+
+  return useMutation({
+    mutationFn: (
+      id: string
+    ) =>
+      JobAPI.deleteJob(
+        id
+      ),
+
+    /* ----------------------------------
+       Optimistic Delete
+    ---------------------------------- */
+
+    onMutate: async (
+      id
+    ) => {
+
+      await queryClient.cancelQueries({
+        queryKey:
+          jobQueryKeys.all,
+      });
+
+      const previousJobs =
+        queryClient.getQueryData<JobCache>(
+          jobQueryKeys.all
+        );
+
+      /*
+       * Remove immediately from
+       * visible job list.
+       */
+
+      queryClient.setQueryData<JobCache>(
+        jobQueryKeys.all,
+        (
+          oldJobs
+        ) => {
+
+          if (!oldJobs) {
+            return oldJobs;
+          }
+
+          return oldJobs.filter(
+            (
+              job
+            ) =>
+              job.id !== id
+          );
+        }
+      );
+
+      return {
+        previousJobs,
+      };
+    },
+
+    /* ----------------------------------
+       Rollback
+    ---------------------------------- */
+
+    onError: (
+      _error,
+      _id,
+      context
+    ) => {
+
+      if (
+        context?.previousJobs
+      ) {
+
+        queryClient.setQueryData<JobCache>(
+          jobQueryKeys.all,
+          context.previousJobs
+        );
+      }
+    },
+
+    /* ----------------------------------
+       Server Success
+    ---------------------------------- */
+
+    onSuccess: async (
+      _data,
+      id
+    ) => {
+
+      /*
+       * Deleted job should no longer
+       * exist in detail cache.
+       */
+
+      queryClient.removeQueries({
+        queryKey:
+          jobQueryKeys.detail(
+            id
+          ),
+      });
+
+      await invalidateJobListAndStats(
+        queryClient
+      );
+    },
+
+    /* ----------------------------------
+       Final Synchronization
+    ---------------------------------- */
+
+    onSettled: async () => {
+
+      await invalidateJobListAndStats(
+        queryClient
+      );
+    },
+  });
+}
+
+/* ==========================================================
+   Update Status Mutation
+========================================================== */
+
+export function useUpdateStatusMutation() {
+  const queryClient =
+    useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      status,
+    }: {
+      id: string;
+
+      status: JobStatus;
+    }) =>
+      JobAPI.updateJobStatus(
+        id,
+        status
+      ),
+
+    /* ----------------------------------
+       Optimistic Status Update
+    ---------------------------------- */
+
+    onMutate: async ({
+      id,
+      status,
+    }) => {
+
+      await queryClient.cancelQueries({
+        queryKey:
+          jobQueryKeys.all,
+      });
+
+      await queryClient.cancelQueries({
+        queryKey:
+          jobQueryKeys.detail(
+            id
+          ),
+      });
+
+      const previousJobs =
+        queryClient.getQueryData<JobCache>(
+          jobQueryKeys.all
+        );
+
+      const previousJob =
+        queryClient.getQueryData<JobItem>(
+          jobQueryKeys.detail(
+            id
+          )
+        );
+
+      /*
+       * Update list immediately.
+       */
+
+      queryClient.setQueryData<JobCache>(
+        jobQueryKeys.all,
+        (
+          oldJobs
+        ) => {
+
+          if (!oldJobs) {
+            return oldJobs;
+          }
+
+          return oldJobs.map(
+            (
+              job
+            ) =>
+              job.id === id
+                ? {
+                    ...job,
+                    status,
+                  }
+                : job
+          );
+        }
+      );
+
+      /*
+       * Update detail cache immediately.
+       */
+
+      if (previousJob) {
+
+        queryClient.setQueryData<JobItem>(
+          jobQueryKeys.detail(
+            id
+          ),
+          {
+            ...previousJob,
+            status,
+          }
+        );
+      }
+
+      return {
+        previousJobs,
+
+        previousJob,
+      };
+    },
+
+    /* ----------------------------------
+       Rollback
+    ---------------------------------- */
+
+    onError: (
+      _error,
+      variables,
+      context
+    ) => {
+
+      if (
+        context?.previousJobs
+      ) {
+
+        queryClient.setQueryData<JobCache>(
+          jobQueryKeys.all,
+          context.previousJobs
+        );
+      }
+
+      if (
+        context?.previousJob
+      ) {
+
+        queryClient.setQueryData<JobItem>(
+          jobQueryKeys.detail(
+            variables.id
+          ),
+          context.previousJob
+        );
+      }
+    },
+
+    /* ----------------------------------
+       Server Success
+    ---------------------------------- */
+
+    onSuccess: async (
+      updatedJob
+    ) => {
+
+      queryClient.setQueryData<JobItem>(
+        jobQueryKeys.detail(
+          updatedJob.id
+        ),
+        updatedJob
+      );
+
+      /*
+       * Status affects dashboard
+       * statistics, so both caches
+       * must be refreshed.
+       */
+
+      await invalidateJobListAndStats(
+        queryClient
+      );
+    },
+
+    /* ----------------------------------
+       Final Synchronization
+    ---------------------------------- */
+
+    onSettled: async (
+      _data,
+      _error,
+      variables
+    ) => {
+
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey:
+            jobQueryKeys.all,
+        }),
+
+        queryClient.invalidateQueries({
+          queryKey:
+            jobQueryKeys.stats,
+        }),
+
+        queryClient.invalidateQueries({
+          queryKey:
+            jobQueryKeys.detail(
+              variables.id
+            ),
+        }),
+      ]);
+    },
+  });
+}
+
+/* ==========================================================
+   Prefetch Jobs
+========================================================== */
+
+export function usePrefetchJobs() {
+  const queryClient =
+    useQueryClient();
+
+  useEffect(() => {
+
+    /*
+     * Warm Jobs cache.
+     */
+
+    queryClient.prefetchQuery({
+      queryKey:
+        jobQueryKeys.all,
+
+      queryFn:
+        JobAPI.getJobs,
+
+      staleTime:
+        1000 * 60 * 5,
+    });
+
+    /*
+     * Warm Dashboard cache.
+     */
+
+    queryClient.prefetchQuery({
+      queryKey:
+        jobQueryKeys.stats,
+
+      queryFn:
+        JobAPI.getDashboardStats,
+
+      staleTime:
+        1000 * 60 * 2,
+    });
+
+  }, [
+    queryClient,
+  ]);
+}
+
+============================================================
+FILE: src\hooks\job\useJobTracker.ts
+============================================================
+import { useCallback } from "react";
+
+import toast from "react-hot-toast";
+
+import { useJobStore } from "../../store/job-store";
+import {
+  defaultDashboard,
+} from "../../store/job-store";
+
+
+import {
+  useJobsQuery,
+  useDashboardQuery,
+  useCreateJobMutation,
+  useUpdateJobMutation,
+  useDeleteJobMutation,
+  useUpdateStatusMutation,
+   usePrefetchJobs,
+} from "./useJobQueries";
+
+import type {
+  
+  JobStatus,
+  CreateJobRequest,
+  UpdateJobRequest,
+} from "../../types/job/job.types";
+
+/* ==========================================================
+   Hook
+========================================================== */
+
+export function useJobTracker() {
+  const {
+    jobs,
+
+    selectedJob,
+
+    filters,
+
+    saving,
+
+    deleting,
+
+    setSaving,
+
+    setDeleting,
+
+    calculateDashboard,
+
+    addJob,
+
+    updateJob,
+
+    removeJob,
+
+    selectJob,
+  } = useJobStore();
+
+  const jobsQuery =
+  useJobsQuery();
+
+const dashboardQuery =
+  useDashboardQuery();
+
+  usePrefetchJobs();
+
+  const createMutation =
+  useCreateJobMutation();
+
+const updateMutation =
+  useUpdateJobMutation();
+
+const deleteMutation =
+  useDeleteJobMutation();
+
+const statusMutation =
+  useUpdateStatusMutation();
+
+  /* ==========================================================
+     Load Jobs
+  ========================================================== */
+
+ const fetchJobs =
+  useCallback(async () => {
+    await jobsQuery.refetch();
+
+    if (
+      jobsQuery.data?.length
+    ) {
+      selectJob(
+        jobsQuery.data[0]
+      );
+    }
+
+    calculateDashboard();
+
+    return (
+      jobsQuery.data ??
+      []
+    );
+  }, [
+    jobsQuery,
+    calculateDashboard,
+    selectJob,
+  ]);
+
+  /* ==========================================================
+     Dashboard
+  ========================================================== */
+
+  const refreshDashboard =
+  useCallback(async () => {
+    await dashboardQuery.refetch();
+
+    calculateDashboard();
+  }, [
+    dashboardQuery,
+    calculateDashboard,
+  ]);
+
+      /* ==========================================================
+     Create Job
+  ========================================================== */
+
+  
+
+          const createJob = useCallback(
+  async (
+    payload: CreateJobRequest
+  ) => {
+    try {
+      setSaving(true);
+
+      const createdJob =
+  await createMutation.mutateAsync(
+    payload
+  );
+
+await jobsQuery.refetch();
+
+await dashboardQuery.refetch();
+
+toast.success(
+  "Job created successfully."
+);
+
+return createdJob;
+    } catch (error) {
+      console.error(error);
+
+      toast.error(
+        "Unable to create job."
+      );
+
+      throw error;
+    } finally {
+      setSaving(false);
+    }
+  },
+  [
+    createMutation,
+    addJob,
+    calculateDashboard,
+    selectJob,
+    setSaving,
+  ]
+);
+
+  /* ==========================================================
+     Update Job
+  ========================================================== */
+const editJob = useCallback(
+  async (
+    id: string,
+    payload: UpdateJobRequest
+  ) => {
+    try {
+      setSaving(true);
+
+      const updatedJob =
+        await updateMutation.mutateAsync({
+          id,
+          payload,
+        });
+
+      await jobsQuery.refetch();
+
+await dashboardQuery.refetch();
+
+      toast.success(
+        "Job updated successfully."
+      );
+
+      return updatedJob;
+    } catch (error) {
+      console.error(error);
+
+      toast.error(
+        "Unable to update job."
+      );
+
+      throw error;
+    } finally {
+      setSaving(false);
+    }
+  },
+  [
+    updateMutation,
+    updateJob,
+    calculateDashboard,
+    selectJob,
+    setSaving,
+  ]
+);
+
+  /* ==========================================================
+     Delete Job
+  ========================================================== */
+
+ const deleteJob = useCallback(
+  async (
+    id: string
+  ) => {
+    try {
+      setDeleting(true);
+
+      await deleteMutation.mutateAsync(
+        id
+      );
+
+      await jobsQuery.refetch();
+
+await dashboardQuery.refetch();
+
+      toast.success(
+        "Job deleted successfully."
+      );
+    } catch (error) {
+      console.error(error);
+
+      toast.error(
+        "Unable to delete job."
+      );
+
+      throw error;
+    } finally {
+      setDeleting(false);
+    }
+  },
+  [
+    deleteMutation,
+    removeJob,
+    calculateDashboard,
+    selectJob,
+    setDeleting,
+  ]
+);
+
+  /* ==========================================================
+     Update Status
+  ========================================================== */
+
+ const updateJobStatus =
+  useCallback(
+    async (
+      id: string,
+      status: JobStatus
+    ) => {
+      try {
+        const updatedJob =
+          await statusMutation.mutateAsync({
+            id,
+            status,
+          });
+
+        await jobsQuery.refetch();
+
+await dashboardQuery.refetch();
+
+        toast.success(
+          "Status updated."
+        );
+
+        return updatedJob;
+      } catch (error) {
+        console.error(error);
+
+        toast.error(
+          "Unable to update status."
+        );
+
+        throw error;
+      }
+    },
+    [
+      statusMutation,
+      updateJob,
+      calculateDashboard,
+      selectJob,
+    ]
+  );
+
+      /* ==========================================================
+     Select Job
+  ========================================================== */
+
+  const selectCurrentJob =
+    useCallback(
+      (
+        id: string
+      ) => {
+
+        const job =
+          jobs.find(
+            (item) =>
+              item.id === id
+          ) ?? null;
+
+        selectJob(job);
+      },
+      [
+        jobs,
+        selectJob,
+      ]
+    );
+
+  /* ==========================================================
+     Get Single Job
+  ========================================================== */
+
+  const getJob =
+    useCallback(
+      (
+        id: string
+      ) =>
+        jobs.find(
+          (job) =>
+            job.id === id
+        ) ?? null,
+      [jobs]
+    );
+
+  /* ==========================================================
+     Public API
+  ========================================================== */
+
+  return {
+
+    /* State */
+
+    jobs:
+  jobsQuery.data ??
+  [],
+
+    selectedJob,
+
+   stats:
+dashboardQuery.data ??
+defaultDashboard,
+
+    filters,
+
+    loading:
+jobsQuery.isLoading ||
+dashboardQuery.isLoading ||
+saving ||
+deleting,
+
+    saving,
+
+    deleting,
+
+    /* Actions */
+
+    fetchJobs,
+
+    refreshDashboard,
+
+    createJob,
+
+    editJob,
+
+    deleteJob,
+
+    updateJobStatus,
+
+    selectCurrentJob,
+
+    getJob,
+  };
+}
+
+============================================================
+FILE: src\hooks\linkedin\useLinkedInOptimizer.ts
+============================================================
+import { useCallback } from "react";
+
+import toast from "react-hot-toast";
+
+import {
+  LinkedInAPI,
+} from "../../services/linkedin/linkedin.api";
+
+import {
+  useLinkedInStore,
+} from "../../store/linkedin-store";
+
+import type {
+  LinkedInOptimizeRequest,
+} from "../../types/linkedin/linkedin.types";
+
+/* ===========================================================
+   LinkedIn Optimizer Hook
+=========================================================== */
+
+export function useLinkedInOptimizer() {
+  const {
+    profile,
+
+    result,
+
+    loading,
+
+    error,
+
+    setLoading,
+
+    setError,
+
+    setResult,
+
+    clearResult,
+
+    resetProfile,
+  } = useLinkedInStore();
+
+  /* ===========================================================
+     Generate AI Optimization
+  =========================================================== */
+
+  const optimizeProfile =
+    useCallback(
+      async (
+        payload: Omit<
+          LinkedInOptimizeRequest,
+          "profile"
+        >
+      ) => {
+        if (loading) {
+          return;
+        }
+
+        try {
+          setLoading(true);
+
+          setError(null);
+
+          clearResult();
+
+          const response =
+            await LinkedInAPI.optimizeLinkedInProfile(
+              {
+                profile,
+
+                ...payload,
+              }
+            );
+
+          if (!response.success) {
+            throw new Error(
+              response.message ||
+                "Optimization failed."
+            );
+          }
+
+          setResult(
+            response.data
+          );
+
+          toast.success(
+            "LinkedIn profile optimized successfully."
+          );
+
+          return response.data;
+        } catch (err: any) {
+          const message =
+            err?.response?.data
+              ?.message ||
+            err?.message ||
+            "Unable to optimize profile.";
+
+          setError(message);
+
+          toast.error(message);
+
+          throw err;
+        } finally {
+          setLoading(false);
+        }
+      },
+      [
+        profile,
+
+        loading,
+
+        setLoading,
+
+        setError,
+
+        setResult,
+
+        clearResult,
+      ]
+    );
+
+
+      /* ===========================================================
+     History
+  =========================================================== */
+
+  const loadHistory =
+    useCallback(async () => {
+      try {
+        return await LinkedInAPI.getLinkedInHistory();
+      } catch (error: any) {
+        toast.error(
+          error?.response?.data?.message ??
+            "Unable to load history."
+        );
+
+        throw error;
+      }
+    }, []);
+
+  /* ===========================================================
+     Delete History
+  =========================================================== */
+
+  const deleteHistory =
+    useCallback(async (id: string) => {
+      try {
+        await LinkedInAPI.deleteLinkedInHistory(
+          id
+        );
+
+        toast.success(
+          "History deleted successfully."
+        );
+      } catch (error: any) {
+        toast.error(
+          error?.response?.data?.message ??
+            "Unable to delete history."
+        );
+
+        throw error;
+      }
+    }, []);
+
+  /* ===========================================================
+     Export PDF
+  =========================================================== */
+
+  const downloadPDF =
+    useCallback(async (id: string) => {
+      try {
+        const blob =
+          await LinkedInAPI.exportLinkedInPDF(
+            id
+          );
+
+        const url =
+          window.URL.createObjectURL(blob);
+
+        const link =
+          document.createElement("a");
+
+        link.href = url;
+
+        link.download =
+          "linkedin-profile.pdf";
+
+        link.click();
+
+        window.URL.revokeObjectURL(url);
+
+        toast.success(
+          "PDF downloaded."
+        );
+      } catch (error: any) {
+        toast.error(
+          error?.response?.data?.message ??
+            "Unable to export PDF."
+        );
+
+        throw error;
+      }
+    }, []);
+
+  /* ===========================================================
+     Reset
+  =========================================================== */
+
+  const resetOptimizer =
+    useCallback(() => {
+      resetProfile();
+
+      clearResult();
+
+      setError(null);
+    }, [
+      resetProfile,
+      clearResult,
+      setError,
+    ]);
+
+  /* ===========================================================
+     Public API
+  =========================================================== */
+
+  return {
+    profile,
+
+    result,
+
+    loading,
+
+    error,
+
+    optimizeProfile,
+
+    loadHistory,
+
+    deleteHistory,
+
+    downloadPDF,
+
+    resetOptimizer,
+  };
+}
+
+============================================================
+FILE: src\hooks\useATSScore.ts
+============================================================
+import { useQuery } from "@tanstack/react-query";
+
+import {
+  getATSScore,
+} from "../services/dashboard/ats.service";
+
+export function useATSScore() {
+  return useQuery({
+    queryKey: ["ats-score"],
+    queryFn: getATSScore,
+  });
+}
+
+============================================================
+FILE: src\hooks\useDashboardStats.ts
+============================================================
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import { api }
+from "../lib/axios";
+
+export function useDashboardStats() {
+
+  const [stats, setStats] =
+    useState({
+      totalInterviews: 0,
+      averageScore: 0,
+      strongestArea: "N/A",
+      weakestArea: "N/A",
+    });
+
+  useEffect(() => {
+
+    const load =
+      async () => {
+
+        try {
+
+          const res =
+            await api.get(
+              "/api/dashboard/stats"
+            );
+
+          setStats(
+            res.data.stats
+          );
+
+        } catch (error) {
+
+          console.error(error);
+
+        }
+
+      };
+
+    load();
+
+  }, []);
+
+  return stats;
+}
+
+============================================================
+FILE: src\hooks\useJobs.ts
+============================================================
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import { JobAPI } from "../services/job/job.api";
+
+import type {
+  JobItem,
+} from "../types/job/job.types";
+
+export function useJobs() {
+  const [jobs, setJobs] = useState<JobItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const data = await JobAPI.getJobs();
+        setJobs(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void fetchJobs();
+  }, []);
+
+  return {
+    jobs,
+    loading,
+  };
+}
+
+
+============================================================
+FILE: src\hooks\useOnlineStatus.ts
+============================================================
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  onlineManager,
+} from "@tanstack/react-query";
+
+/* ==========================================================
+   Hook
+========================================================== */
+
+export function useOnlineStatus() {
+  const [
+    isOnline,
+    setIsOnline,
+  ] = useState(
+    onlineManager.isOnline()
+  );
+
+  useEffect(() => {
+    return onlineManager.subscribe(
+      (online) => {
+        setIsOnline(online);
+      }
+    );
+  }, []);
+
+  return isOnline;
+}
+
+============================================================
+FILE: src\hooks\useQueryHydration.ts
+============================================================
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  useIsRestoring,
+} from "@tanstack/react-query";
+
+/* ==========================================================
+   Hook
+========================================================== */
+
+export function useQueryHydration() {
+  const isRestoring =
+    useIsRestoring();
+
+  const [
+    hydrationComplete,
+    setHydrationComplete,
+  ] = useState(false);
+
+  useEffect(() => {
+    if (!isRestoring) {
+      setHydrationComplete(
+        true
+      );
+    }
+  }, [
+    isRestoring,
+  ]);
+
+  return {
+    isHydrating:
+      !hydrationComplete,
+
+    hydrationComplete,
+  };
+}
+
+============================================================
+FILE: src\hooks\useRecruiterSimulation.ts
+============================================================
+import { api } from "../lib/axios";
+
+import {
+  useRecruiterStore,
+} from "../store/recruiter.store";
+
+export function useRecruiterSimulation() {
+
+  const {
+
+    loading,
+
+    setLoading,
+
+    setSimulation,
+
+  } =
+    useRecruiterStore();
+
+  const simulateRecruiter =
+    async (
+
+      resumeAnalysis: unknown,
+
+      interviewAnalysis: unknown,
+
+      careerProfile: unknown
+
+    ) => {
+
+      try {
+
+        setLoading(true);
+
+        const response =
+          await api.post(
+
+            "/api/recruiter/simulate",
+
+            {
+
+              resumeAnalysis,
+
+              interviewAnalysis,
+
+              careerProfile,
+
+            }
+
+          );
+
+        setSimulation(
+
+          response.data.simulation
+
+        );
+
+        return response.data.simulation;
+
+      } catch (error) {
+
+        console.error(
+
+          "Recruiter Simulation Error:",
+
+          error
+
+        );
+
+        throw error;
+
+      } finally {
+
+        setLoading(false);
+
+      }
+
+    };
+
+  return {
+
+    loading,
+
+    simulateRecruiter,
+
+  };
+
+}
+
+============================================================
+FILE: src\hooks\useResumeAnalysis.ts
+============================================================
+import { useState } from "react";
+
+import { analyzeResume } from "../services/resume.service";
+
+export function useResumeAnalysis() {
+
+const [loading, setLoading] = useState(false);
+
+const [analysis, setAnalysis] = useState(null);
+
+const runAnalysis = async (
+
+resumeText: string,
+
+language: string
+
+) => {
+
+setLoading(true);
+
+try {
+
+const data = await analyzeResume(
+
+resumeText,
+
+language
+
+);
+
+setAnalysis(data);
+
+} finally {
+
+setLoading(false);
+
+}
+
+};
+
+return {
+
+loading,
+
+analysis,
+
+runAnalysis,
+
+};
+
+}
+
+============================================================
+FILE: src\hooks\useResumeAnalytics.ts
+============================================================
+import { useQuery } from "@tanstack/react-query";
+
+import {
+  getResumeAnalytics,
+} from "../services/dashboard/dashboard.service";
+
+export function useResumeAnalytics() {
+  return useQuery({
+    queryKey: ["resume-analytics"],
+
+    queryFn: getResumeAnalytics,
+
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+============================================================
+FILE: src\hooks\useResumeAnalyzer.ts
+============================================================
+import { analyzeResume } from "../services/resume.service";
+import { useResumeAnalysisStore } from "../store/resume-analysis-store";
+
+export const useResumeAnalyzer = () => {
+  const {
+    loading,
+    setLoading,
+    result,
+    setResult,
+  } = useResumeAnalysisStore();
+
+  const analyze = async (
+    resumeText: string,
+    language = "english"
+  ) => {
+    try {
+      setLoading(true);
+
+      const analysisData =
+        await analyzeResume(resumeText, language);
+
+      setResult(analysisData);
+
+      return analysisData;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    loading,
+    result,
+    analyze,
+  };
+};
+
+============================================================
+FILE: src\hooks\useResumeUpload.ts
+============================================================
+import { useState } from "react";
+import { api } from "../lib/axios";
+import { useCareerProfileStore } from "../store/career-profile.store";
+
+export function useResumeUpload() {
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [progress, setProgress] =
+    useState(0);
+
+  const [status, setStatus] =
+    useState("");
+
+    const { setProfile } =
+  useCareerProfileStore();
+
+  const uploadResume =
+    async (
+      file: File
+    ) => {
+
+      try {
+
+        setLoading(true);
+
+        setProgress(5);
+
+        setStatus(
+          "Uploading Resume..."
+        );
+
+        const formData =
+          new FormData();
+
+        formData.append(
+          "resume",
+          file
+        );
+
+        const response =
+          await api.post(
+            "/api/resume-upload",
+            formData,
+            {
+              headers: {
+                "Content-Type":
+                  "multipart/form-data",
+              },
+
+              onUploadProgress:
+                (event) => {
+
+                  if (!event.total)
+                    return;
+
+                  const percent =
+                    Math.round(
+                      (event.loaded *
+                        40) /
+                        event.total
+                    );
+
+                  setProgress(
+                    percent
+                  );
+
+                },
+            }
+          );
+
+
+        setStatus(
+          "Extracting Resume..."
+        );
+
+        setProgress(55);
+
+        await new Promise(
+          (resolve) =>
+            setTimeout(
+              resolve,
+              700
+            )
+        );
+
+        setStatus(
+          "Analyzing Resume..."
+        );
+
+        setProgress(80);
+
+        await new Promise(
+          (resolve) =>
+            setTimeout(
+              resolve,
+              800
+            )
+        );
+
+       setProgress(100);
+
+setStatus(
+  "Completed"
+);
+
+/*
+--------------------------------
+Career Profile Store Update
+--------------------------------
+*/
+
+const profile =
+  response.data.profile ??
+  response.data.analysis ??
+  response.data.result ??
+  null;
+
+if (profile) {
+
+  setProfile(profile);
+
+}
+
+return response.data;
+
+      } finally {
+
+        setLoading(false);
+
+      }
+
+    };
+
+  return {
+
+    loading,
+
+    progress,
+
+    status,
+
+    uploadResume,
+
+  };
+
+}
+
+============================================================
+FILE: src\hooks\useUserProfile.ts
+============================================================
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+
+import { toast } from "react-hot-toast";
+
+import { getCurrentUser } from "../services/auth.service";
+import {
+  updateProfile,
+  type UpdateProfilePayload,
+  type UpdateProfileResponse,
+} from "../services/user.service";
+
+import {
+  useAuthStore,
+  type AuthUser,
+} from "../store/auth-store";
+
+export function useUserProfile() {
+  const queryClient = useQueryClient();
+
+  const user = useAuthStore(
+    (state) => state.user
+  );
+
+  const setUser = useAuthStore(
+    (state) => state.setUser
+  );
+
+  const {
+    data,
+    isLoading,
+    error,
+  } = useQuery<{ user: AuthUser }>({
+    queryKey: ["currentUser"],
+
+    queryFn: getCurrentUser,
+
+    enabled: Boolean(user),
+
+    staleTime: 1000 * 60 * 5,
+
+    retry: 1,
+  });
+
+  /*
+   * IMPORTANT:
+   *
+   * Do NOT continuously copy React Query data
+   * into Zustand with useEffect.
+   *
+   * That can overwrite freshly updated profile data
+   * with stale cached data.
+   */
+
+  const updateProfileMutation =
+    useMutation<
+      UpdateProfileResponse,
+      Error,
+      UpdateProfilePayload
+    >({
+      mutationFn: updateProfile,
+
+      onSuccess: (responseData) => {
+        const updatedUser =
+          responseData.user;
+
+        /*
+         * 1. Update Zustand immediately.
+         *
+         * ProfileCard and ProfileCompletion
+         * will re-render immediately.
+         */
+        setUser(updatedUser);
+
+        /*
+         * 2. Replace React Query cache immediately.
+         *
+         * We do NOT wait for another request.
+         */
+        queryClient.setQueryData(
+          ["currentUser"],
+          {
+            user: updatedUser,
+          }
+        );
+
+        /*
+         * 3. Optional background revalidation.
+         *
+         * This verifies server state without
+         * replacing the UI with stale data first.
+         */
+        void queryClient.invalidateQueries({
+          queryKey: ["currentUser"],
+          refetchType: "active",
+        });
+
+        toast.success(
+          "Profile updated successfully!"
+        );
+      },
+
+      onError: (error) => {
+        toast.error(
+          error.message ||
+            "Failed to update profile."
+        );
+      },
+    });
+
+  /*
+   * Prefer the React Query user when it exists,
+   * otherwise use Zustand.
+   */
+  const currentUser =
+    data?.user ?? user;
+
+  return {
+    user: currentUser,
+
+    isLoading,
+
+    error,
+
+    updateProfile:
+      updateProfileMutation.mutateAsync,
+
+    isUpdating:
+      updateProfileMutation.isPending,
+  };
+}
+
+============================================================
+FILE: src\lib\axios.ts
+============================================================
+import axios from "axios";
+
+import type {
+  AxiosError,
+  AxiosRequestConfig,
+  InternalAxiosRequestConfig,
+} from "axios";
+
+/* ==========================================================
+   API Configuration
+========================================================== */
+
+const API_URL =
+  import.meta.env.VITE_API_URL;
+
+if (!API_URL) {
+  console.warn(
+    "VITE_API_URL is not configured."
+  );
+}
+
+/* ==========================================================
+   Axios Instance
+========================================================== */
+
+export const api = axios.create({
+  baseURL: API_URL,
+
+  /**
+   * Required for HTTP-only refresh cookies.
+   */
+  withCredentials: true,
+
+  timeout: 30_000,
+});
+
+/* ==========================================================
+   Extended Request Config
+========================================================== */
+
+interface RetryRequestConfig
+  extends AxiosRequestConfig {
+  _retry?: boolean;
+}
+
+/* ==========================================================
+   Stored Auth Shape
+========================================================== */
+
+interface StoredAuth {
+  state?: {
+    token?: unknown;
+  };
+}
+
+/* ==========================================================
+   Auth Storage Helpers
+========================================================== */
+
+function getStoredAuth(): StoredAuth | null {
+  try {
+    const stored =
+      localStorage.getItem(
+        "careerboost-auth"
+      );
+
+    if (!stored) {
+      return null;
+    }
+
+    const parsed: unknown =
+      JSON.parse(stored);
+
+    if (
+      !parsed ||
+      typeof parsed !== "object"
+    ) {
+      return null;
+    }
+
+    return parsed as StoredAuth;
+  } catch {
+    return null;
+  }
+}
+
+/* ==========================================================
+   Access Token
+========================================================== */
+
+function getAccessToken(): string | null {
+  const auth =
+    getStoredAuth();
+
+  const token =
+    auth?.state?.token;
+
+  if (
+    typeof token !== "string" ||
+    token.trim().length === 0
+  ) {
+    return null;
+  }
+
+  return token.trim();
+}
+
+/* ==========================================================
+   Save Access Token
+========================================================== */
+
+function saveAccessToken(
+  token: string
+): void {
+  if (
+    typeof token !== "string" ||
+    token.trim().length === 0
+  ) {
+    return;
+  }
+
+  try {
+    const auth =
+      getStoredAuth();
+
+    if (!auth) {
+      return;
+    }
+
+    if (
+      !auth.state ||
+      typeof auth.state !== "object"
+    ) {
+      auth.state = {};
+    }
+
+    auth.state.token =
+      token.trim();
+
+    localStorage.setItem(
+      "careerboost-auth",
+      JSON.stringify(auth)
+    );
+  } catch {
+    /**
+     * Storage failure should not
+     * crash the application.
+     */
+  }
+}
+
+/* ==========================================================
+   Clear Local Auth
+========================================================== */
+
+function clearAuth(): void {
+  try {
+    localStorage.removeItem(
+      "careerboost-auth"
+    );
+  } catch {
+    // Ignore storage errors.
+  }
+}
+
+/* ==========================================================
+   Request Interceptor
+========================================================== */
+
+api.interceptors.request.use(
+  (
+    config: InternalAxiosRequestConfig
+  ) => {
+    const token =
+      getAccessToken();
+
+    if (token) {
+      config.headers.Authorization =
+        `Bearer ${token}`;
+    }
+
+    return config;
+  },
+
+  (error) =>
+    Promise.reject(error)
+);
+
+/* ==========================================================
+   Refresh Queue
+========================================================== */
+
+interface QueueItem {
+  resolve: (
+    token: string
+  ) => void;
+
+  reject: (
+    error: unknown
+  ) => void;
+}
+
+let isRefreshing = false;
+
+let waitingQueue: QueueItem[] = [];
+
+/* ==========================================================
+   Process Queue
+========================================================== */
+
+function processQueue(
+  error: unknown,
+  token: string | null
+): void {
+  waitingQueue.forEach(
+    ({
+      resolve,
+      reject,
+    }) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      if (!token) {
+        reject(
+          new Error(
+            "Authentication refresh failed."
+          )
+        );
+
+        return;
+      }
+
+      resolve(token);
+    }
+  );
+
+  waitingQueue = [];
+}
+
+/* ==========================================================
+   Refresh Access Token
+========================================================== */
+
+async function refreshAccessToken(): Promise<string> {
+  if (!API_URL) {
+    throw new Error(
+      "VITE_API_URL is not configured."
+    );
+  }
+
+  const response =
+    await axios.post<{
+      success: boolean;
+
+      message?: string;
+
+      token?: string;
+
+      accessToken?: string;
+    }>(
+      `${API_URL}/api/auth/refresh`,
+      {},
+      {
+        withCredentials: true,
+
+        timeout: 30_000,
+      }
+    );
+
+  const token =
+    response.data.token ??
+    response.data.accessToken;
+
+  if (
+    typeof token !== "string" ||
+    token.trim().length === 0
+  ) {
+    throw new Error(
+      response.data.message ??
+        "Refresh response did not contain an access token."
+    );
+  }
+
+  return token.trim();
+}
+
+/* ==========================================================
+   Response Interceptor
+========================================================== */
+
+api.interceptors.response.use(
+  (response) =>
+    response,
+
+  async (
+    error: AxiosError
+  ) => {
+    const originalRequest =
+      error.config as
+        | RetryRequestConfig
+        | undefined;
+
+    /* ======================================================
+       No Request Config
+    ====================================================== */
+
+    if (!originalRequest) {
+      return Promise.reject(error);
+    }
+
+    /* ======================================================
+       Only Handle 401
+    ====================================================== */
+
+    if (
+      error.response?.status !== 401
+    ) {
+      return Promise.reject(error);
+    }
+
+    /* ======================================================
+       Prevent Infinite Retry
+    ====================================================== */
+
+    if (
+      originalRequest._retry
+    ) {
+      return Promise.reject(error);
+    }
+
+    /* ======================================================
+       Never Refresh Refresh Endpoint
+    ====================================================== */
+
+    const requestUrl =
+      originalRequest.url ?? "";
+
+    if (
+      requestUrl.includes(
+        "/api/auth/refresh"
+      )
+    ) {
+      return Promise.reject(error);
+    }
+
+    /* ======================================================
+       Mark Request As Retried
+    ====================================================== */
+
+    originalRequest._retry = true;
+
+    /* ======================================================
+       Another Refresh Is Already Running
+    ====================================================== */
+
+    if (isRefreshing) {
+      return new Promise(
+        (
+          resolve,
+          reject
+        ) => {
+          waitingQueue.push({
+            resolve: (
+              token
+            ) => {
+              originalRequest.headers = {
+                ...originalRequest.headers,
+
+                Authorization:
+                  `Bearer ${token}`,
+              };
+
+              resolve(
+                api(originalRequest)
+              );
+            },
+
+            reject,
+          });
+        }
+      );
+    }
+
+    /* ======================================================
+       Start Refresh
+    ====================================================== */
+
+    isRefreshing = true;
+
+    try {
+      const newToken =
+        await refreshAccessToken();
+
+      /* ====================================================
+         Save New Access Token
+      ==================================================== */
+
+      saveAccessToken(
+        newToken
+      );
+
+      /* ====================================================
+         Resolve Waiting Requests
+      ==================================================== */
+
+      processQueue(
+        null,
+        newToken
+      );
+
+      /* ====================================================
+         Retry Original Request
+      ==================================================== */
+
+      originalRequest.headers = {
+        ...originalRequest.headers,
+
+        Authorization:
+          `Bearer ${newToken}`,
+      };
+
+      return api(
+        originalRequest
+      );
+    } catch (refreshError) {
+      /* ====================================================
+         Reject Waiting Requests
+      ==================================================== */
+
+      processQueue(
+        refreshError,
+        null
+      );
+
+      /* ====================================================
+         Clear Authentication
+      ==================================================== */
+
+      clearAuth();
+
+      /* ====================================================
+         Redirect To Login
+      ==================================================== */
+
+      if (
+        typeof window !==
+          "undefined" &&
+        window.location.pathname !==
+          "/login"
+      ) {
+        window.location.replace(
+          "/login"
+        );
+      }
+
+      return Promise.reject(
+        refreshError
+      );
+    } finally {
+      isRefreshing = false;
+    }
+  }
+);
+
+============================================================
+FILE: src\lib\react-query\query-persistence.ts
+============================================================
+import {
+  persistQueryClient,
+} from "@tanstack/react-query-persist-client";
+
+import {
+  createSyncStoragePersister,
+} from "@tanstack/query-sync-storage-persister";
+
+import {
+  queryClient,
+} from "./react-query";
+
+/* ==========================================================
+   Persistence Configuration
+========================================================== */
+
+const CACHE_BUSTER =
+  "careerboost-ai-v1";
+
+/*
+ * Persist query cache for 24 hours.
+ *
+ * After 24 hours the persisted cache is considered stale
+ * and will be discarded.
+ */
+const MAX_CACHE_AGE =
+  1000 *
+  60 *
+  60 *
+  24;
+
+/* ==========================================================
+   Storage Persister
+========================================================== */
+
+export const queryPersister =
+  createSyncStoragePersister({
+    storage:
+      typeof window !== "undefined"
+        ? window.localStorage
+        : undefined,
+
+    key:
+      "careerboost-ai-query-cache",
+
+    throttleTime:
+      1000,
+
+    serialize:
+      JSON.stringify,
+
+    deserialize:
+      JSON.parse,
+  });
+
+/* ==========================================================
+   Start Persistence
+========================================================== */
+
+export function setupQueryPersistence() {
+  if (
+    typeof window ===
+    "undefined"
+  ) {
+    return;
+  }
+
+  persistQueryClient({
+    queryClient,
+
+    persister:
+      queryPersister,
+
+    maxAge:
+      MAX_CACHE_AGE,
+
+    buster:
+      CACHE_BUSTER,
+  });
+}
+
+============================================================
+FILE: src\lib\react-query\react-query.ts
+============================================================
+import {
+  QueryClient,
+} from "@tanstack/react-query";
+
+/* ==========================================================
+   Query Client
+========================================================== */
+
+export const queryClient =
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        /*
+         * Data remains fresh for 60 seconds.
+         * During this period React Query will prefer
+         * cached data instead of immediately refetching.
+         */
+        staleTime:
+          1000 * 60,
+
+        /*
+         * Keep inactive queries in memory for 30 minutes.
+         */
+        gcTime:
+          1000 * 60 * 30,
+
+        /*
+         * Refetch when browser reconnects.
+         */
+        refetchOnReconnect:
+          true,
+
+        /*
+         * Background refresh when user returns
+         * to the browser window.
+         */
+        refetchOnWindowFocus:
+          true,
+
+        /*
+         * Retry failed requests.
+         */
+        retry: 2,
+
+        /*
+         * Small exponential retry delay.
+         */
+        retryDelay: (
+          attemptIndex
+        ) =>
+          Math.min(
+            1000 *
+              2 **
+                attemptIndex,
+            30_000
+          ),
+
+        /*
+         * Offline-aware query behaviour.
+         *
+         * The first request can use available cache,
+         * while failed retries wait for connection.
+         */
+        networkMode:
+          "offlineFirst",
+      },
+
+      mutations: {
+        /*
+         * Mutations also understand offline state.
+         */
+        networkMode:
+          "offlineFirst",
+
+        /*
+         * Retry transient mutation failures.
+         */
+        retry: 1,
+
+        retryDelay: 1000,
+      },
+    },
+  });
+
+============================================================
+FILE: src\services\auth.service.ts
+============================================================
+import { api } from "../lib/axios";
+
+import type { AuthUser } from "../store/auth-store";
+
+/* ==========================================================
+   Auth Payloads
+========================================================== */
+
+export interface RegisterPayload {
+  name: string;
+  email: string;
+  password: string;
+}
+
+export interface LoginPayload {
+  email: string;
+  password: string;
+}
+
+/* ==========================================================
+   Auth Response
+========================================================== */
+
+export interface AuthResponse {
+  success: boolean;
+  message: string;
+  user: AuthUser;
+
+  /**
+   * Current backend response field.
+   */
+  token?: string;
+
+  /**
+   * Kept for compatibility with any existing
+   * endpoint using accessToken naming.
+   */
+  accessToken?: string;
+}
+
+/* ==========================================================
+   Token Resolver
+========================================================== */
+
+export function getAccessToken(
+  response: AuthResponse
+): string | null {
+  const token =
+    response.token ??
+    response.accessToken ??
+    null;
+
+  if (
+    typeof token !== "string" ||
+    token.trim().length === 0
+  ) {
+    return null;
+  }
+
+  return token.trim();
+}
+
+/* ==========================================================
+   Register
+========================================================== */
+
+export async function registerUser(
+  data: RegisterPayload
+): Promise<AuthResponse> {
+  const response =
+    await api.post<AuthResponse>(
+      "/api/auth/register",
+      data
+    );
+
+  return response.data;
+}
+
+/* ==========================================================
+   Login
+========================================================== */
+
+export async function loginUser(
+  data: LoginPayload
+): Promise<AuthResponse> {
+  const response =
+    await api.post<AuthResponse>(
+      "/api/auth/login",
+      data
+    );
+
+  return response.data;
+}
+
+/* ==========================================================
+   Current User
+========================================================== */
+
+export interface CurrentUserResponse {
+  success: boolean;
+  user: AuthUser;
+}
+
+export async function getCurrentUser(): Promise<CurrentUserResponse> {
+  const response =
+    await api.get<CurrentUserResponse>(
+      "/api/auth/me"
+    );
+
+  return response.data;
+}
+
+/* ==========================================================
+   Logout
+========================================================== */
+
+export interface LogoutResponse {
+  success: boolean;
+  message: string;
+}
+
+export async function logoutUser(): Promise<LogoutResponse> {
+  const response =
+    await api.post<LogoutResponse>(
+      "/api/auth/logout"
+    );
+
+  return response.data;
+}
+
+============================================================
+FILE: src\services\cover-letter\cover-letter.api.ts
+============================================================
+import { api } from "../../lib/axios";
+
+import type {
+  GenerateCoverLetterRequest,
+  GenerateCoverLetterResponse,
+} from "../../types/cover-letter/cover-letter.types";
+
+/* ==========================================================
+   Endpoint
+========================================================== */
+
+const BASE_URL =
+  "/api/cover-letter";
+
+/* ==========================================================
+   Generate Cover Letter
+========================================================== */
+
+export async function generateCoverLetter(
+  payload: GenerateCoverLetterRequest
+): Promise<GenerateCoverLetterResponse> {
+  const { data } =
+    await api.post<GenerateCoverLetterResponse>(
+      `${BASE_URL}/generate`,
+      payload
+    );
+
+  return data;
+}
+
+/* ==========================================================
+   History
+========================================================== */
+
+export async function getCoverLetterHistory() {
+  const { data } =
+    await api.get(
+      `${BASE_URL}/history`
+    );
+
+  return data;
+}
+
+/* ==========================================================
+   Delete Cover Letter
+========================================================== */
+
+export async function deleteCoverLetter(
+  id: string
+) {
+  const { data } =
+    await api.delete(
+      `${BASE_URL}/${id}`
+    );
+
+  return data;
+}
+
+/* ==========================================================
+   Export PDF
+========================================================== */
+
+export async function exportCoverLetterPDF(
+  id: string
+) {
+  const response =
+    await api.get(
+      `${BASE_URL}/${id}/pdf`,
+      {
+        responseType: "blob",
+      }
+    );
+
+  return response.data;
+}
+
+/* ==========================================================
+   Export DOCX
+========================================================== */
+
+export async function exportCoverLetterDOCX(
+  id: string
+) {
+  const response =
+    await api.get(
+      `${BASE_URL}/${id}/docx`,
+      {
+        responseType: "blob",
+      }
+    );
+
+  return response.data;
+}
+
+/* ==========================================================
+   Duplicate Cover Letter
+========================================================== */
+
+export async function duplicateCoverLetter(
+  id: string
+) {
+  const { data } =
+    await api.post(
+      `${BASE_URL}/${id}/duplicate`
+    );
+
+  return data;
+}
+
+/* ==========================================================
+   Service Object
+========================================================== */
+
+export const CoverLetterAPI = {
+  generateCoverLetter,
+
+  getCoverLetterHistory,
+
+  deleteCoverLetter,
+
+  exportCoverLetterPDF,
+
+  exportCoverLetterDOCX,
+
+  duplicateCoverLetter,
+};
+
+============================================================
+FILE: src\services\dashboard\ats.service.ts
+============================================================
+import { api } from "../../lib/axios";
+
+export interface ATSScoreResponse {
+  score: number;
+  status: string;
+  message: string;
+  matchedKeywords: number;
+  missingKeywords: number;
+}
+
+export async function getATSScore() {
+  const { data } = await api.get(
+    "/api/dashboard/ats-score"
+  );
+
+  return data.data as ATSScoreResponse;
+}
+
+============================================================
+FILE: src\services\dashboard\dashboard.service.ts
+============================================================
+import { api } from "../../lib/axios";
+
+export interface ResumeAnalyticsPoint {
+  month: string;
+  score: number;
+}
+
+export async function getResumeAnalytics() {
+  const response = await api.get(
+    "/api/dashboard/resume-analytics"
+  );
+
+  return response.data.data as ResumeAnalyticsPoint[];
+}
+
+============================================================
+FILE: src\services\interview\evaluationApi.ts
+============================================================
+
+
+
+import { api } from "../../lib/axios";
+
+export async function evaluateAnswer(
+  question: string,
+  answer: string
+) {
+  const response = await api.post(
+    "/api/evaluation/evaluate",
+    {
+      question,
+      answer,
+    }
+  );
+
+  return response.data;
+}
+
+============================================================
+FILE: src\services\interview\interview.api.ts
+============================================================
+import {
+  api,
+} from "../../lib/axios";
+
+import {
+  retryRequest,
+} from "../../utils/network/retry-request";
+
+import {
+  withTimeout,
+} from "../../utils/network/request-timeout";
+
+import type {
+  InterviewHistoryItem,
+} from "../../types/interview/interview.types";
+
+/* =========================================================
+   Common API Response
+========================================================= */
+
+export interface ApiResponse<T> {
+  success: boolean;
+
+  message?: string;
+
+  data: T;
+}
+
+/* =========================================================
+   Interview Question Response
+========================================================= */
+
+export interface InterviewQuestionResponse {
+  question: string;
+
+  options?: string[];
+
+  correctAnswer?: string;
+
+  explanation?: string;
+
+  skill: string;
+
+  competencyId: string;
+
+  competencyName: string;
+
+  provider: string;
+
+  model: string;
+
+  retries?: number;
+}
+
+/* =========================================================
+   Generate Question Request
+========================================================= */
+
+export interface GenerateQuestionRequest {
+  category: string;
+
+  difficulty:
+    | "beginner"
+    | "intermediate"
+    | "advanced";
+
+  interviewType:
+    | "skill"
+    | "hr"
+    | "mixed";
+
+  language:
+    | "english"
+    | "hindi"
+    | "hinglish"
+    | "urdu";
+
+  skills: string[];
+
+  history: InterviewHistoryItem[];
+}
+
+/* =========================================================
+   Generate Feedback Request
+========================================================= */
+
+export interface GenerateFeedbackRequest {
+  history: InterviewHistoryItem[];
+
+  language:
+    | "english"
+    | "hindi"
+    | "hinglish"
+    | "urdu";
+
+  answers: string[];
+
+  skills: string[];
+}
+
+/* =========================================================
+   Career Insight Request
+========================================================= */
+
+export interface CareerInsightRequest {
+  overallScore: number;
+
+  strengths: string[];
+
+  weaknesses: string[];
+}
+
+/* =========================================================
+   Save Interview Session
+========================================================= */
+
+export interface SaveInterviewSessionRequest {
+  category: string;
+
+  difficulty:
+    | "beginner"
+    | "intermediate"
+    | "advanced";
+
+  interviewType:
+    | "skill"
+    | "hr"
+    | "mixed";
+
+  language:
+    | "english"
+    | "hindi"
+    | "hinglish"
+    | "urdu";
+
+  skills: string[];
+
+  history: InterviewHistoryItem[];
+
+  overallScore: number;
+
+  recruiterVerdict: string;
+
+  strengths: string[];
+
+  weaknesses: string[];
+
+  recommendations: unknown[];
+}
+
+/* =========================================================
+   Generate Question
+========================================================= */
+
+export async function generateInterviewQuestion(
+  payload: GenerateQuestionRequest
+): Promise<
+  ApiResponse<InterviewQuestionResponse>
+> {
+  const response =
+    await retryRequest(() =>
+      withTimeout(
+        api.post<
+          ApiResponse<InterviewQuestionResponse>
+        >(
+          "/api/interview/question",
+          payload
+        )
+      )
+    );
+
+  return response.data;
+}
+
+/* =========================================================
+   Generate Feedback
+========================================================= */
+
+export async function generateInterviewFeedback(
+  payload: GenerateFeedbackRequest
+) {
+  const response =
+    await retryRequest(() =>
+      withTimeout(
+        api.post(
+          "/api/interview/feedback",
+          payload
+        )
+      )
+    );
+
+  return response.data;
+}
+
+/* =========================================================
+   Career Insights
+========================================================= */
+
+export async function generateCareerInsights(
+  payload: CareerInsightRequest
+) {
+  const response =
+    await retryRequest(() =>
+      withTimeout(
+        api.post(
+          "/api/career-insights/generate",
+          payload
+        )
+      )
+    );
+
+  return response.data;
+}
+
+/* =========================================================
+   Save Interview Session
+========================================================= */
+
+export async function saveInterviewSession(
+  payload: SaveInterviewSessionRequest
+) {
+  const response =
+    await retryRequest(() =>
+      withTimeout(
+        api.post(
+          "/api/interview-session/save",
+          payload
+        )
+      )
+    );
+
+  return response.data;
+}
+
+/* =========================================================
+   Service Object
+========================================================= */
+
+export const InterviewAPI = {
+  generateInterviewQuestion,
+
+  generateInterviewFeedback,
+
+  generateCareerInsights,
+
+  saveInterviewSession,
+};
+
+============================================================
+FILE: src\services\job\job.api.ts
+============================================================
+import { api } from "../../lib/axios";
+
+import type {
+  JobItem,
+  JobResponse,
+  JobListResponse,
+  DashboardStatsResponse,
+  CreateJobRequest,
+  UpdateJobRequest,
+  JobStatus,
+  InterviewSchedule,
+  JobTimelineItem,
+} from "../../types/job/job.types";
+
+/* ==========================================================
+   Base Endpoint
+========================================================== */
+
+const BASE_URL = "/api/jobs";
+
+/* ==========================================================
+   Get All Jobs
+========================================================== */
+
+async function getJobs(): Promise<JobItem[]> {
+  const { data } =
+    await api.get<JobListResponse>(
+      BASE_URL
+    );
+
+  return data.data;
+}
+
+/* ==========================================================
+   Get Single Job
+========================================================== */
+
+async function getJob(
+  id: string
+): Promise<JobItem> {
+  const { data } =
+    await api.get<JobResponse>(
+      `${BASE_URL}/${id}`
+    );
+
+  return data.data;
+}
+
+/* ==========================================================
+   Dashboard Stats
+========================================================== */
+
+async function getDashboardStats() {
+  const { data } =
+    await api.get<DashboardStatsResponse>(
+      `${BASE_URL}/stats`
+    );
+
+  return data.data;
+}
+
+/* ==========================================================
+   Create Job
+========================================================== */
+
+async function createJob(
+  payload: CreateJobRequest
+): Promise<JobItem> {
+  const { data } =
+    await api.post<JobResponse>(
+      BASE_URL,
+      payload
+    );
+
+  return data.data;
+}
+
+/* ==========================================================
+   Update Job
+========================================================== */
+
+async function updateJob(
+  id: string,
+  payload: UpdateJobRequest
+): Promise<JobItem> {
+  const { data } =
+    await api.put<JobResponse>(
+      `${BASE_URL}/${id}`,
+      payload
+    );
+
+  return data.data;
+}
+
+/* ==========================================================
+   Delete Job
+========================================================== */
+
+async function deleteJob(
+  id: string
+): Promise<void> {
+  await api.delete(
+    `${BASE_URL}/${id}`
+  );
+}
+
+/* ==========================================================
+   Update Status
+========================================================== */
+
+async function updateJobStatus(
+  id: string,
+  status: JobStatus
+): Promise<JobItem> {
+  const { data } =
+    await api.patch<JobResponse>(
+      `${BASE_URL}/${id}/status`,
+      {
+        status,
+      }
+    );
+
+  return data.data;
+}
+
+/* ==========================================================
+   Schedule Interview
+========================================================== */
+
+async function scheduleInterview(
+  id: string,
+  interview: InterviewSchedule
+): Promise<JobItem> {
+  const { data } =
+    await api.patch<JobResponse>(
+      `${BASE_URL}/${id}/interview`,
+      {
+        interview,
+      }
+    );
+
+  return data.data;
+}
+
+/* ==========================================================
+   Add Timeline Event
+========================================================== */
+
+async function addTimelineEvent(
+  id: string,
+  timelineItem: JobTimelineItem
+): Promise<JobItem> {
+  const { data } =
+    await api.patch<JobResponse>(
+      `${BASE_URL}/${id}/timeline`,
+      {
+        timelineItem,
+      }
+    );
+
+  return data.data;
+}
+
+/* ==========================================================
+   Export Service
+========================================================== */
+
+export const JobAPI = {
+  getJobs,
+
+  getJob,
+
+  getDashboardStats,
+
+  createJob,
+
+  updateJob,
+
+  deleteJob,
+
+  updateJobStatus,
+
+  scheduleInterview,
+
+  addTimelineEvent,
+};
+
+export default JobAPI;
+
+============================================================
+FILE: src\services\linkedin\linkedin.api.ts
+============================================================
+import { api } from "../../lib/axios";
+
+import type {
+  LinkedInOptimizeRequest,
+  LinkedInOptimizeResponse,
+} from "../../types/linkedin/linkedin.types";
+
+/* ==========================================================
+   Endpoint
+========================================================== */
+
+const BASE_URL =
+  "/api/linkedin";
+
+/* ==========================================================
+   Optimize LinkedIn Profile
+========================================================== */
+
+export async function optimizeLinkedInProfile(
+  payload: LinkedInOptimizeRequest
+): Promise<LinkedInOptimizeResponse> {
+  const { data } =
+    await api.post<LinkedInOptimizeResponse>(
+      `${BASE_URL}/optimize`,
+      payload
+    );
+
+  return data;
+}
+
+/* ==========================================================
+   Get Previous Optimizations
+========================================================== */
+
+export async function getLinkedInHistory() {
+  const { data } =
+    await api.get(
+      `${BASE_URL}/history`
+    );
+
+  return data;
+}
+
+/* ==========================================================
+   Delete Optimization
+========================================================== */
+
+export async function deleteLinkedInHistory(
+  id: string
+) {
+  const { data } =
+    await api.delete(
+      `${BASE_URL}/${id}`
+    );
+
+  return data;
+}
+
+/* ==========================================================
+   Export PDF
+========================================================== */
+
+export async function exportLinkedInPDF(
+  id: string
+) {
+  const response =
+    await api.get(
+      `${BASE_URL}/${id}/pdf`,
+      {
+        responseType:
+          "blob",
+      }
+    );
+
+  return response.data;
+}
+
+/* ==========================================================
+   Service
+========================================================== */
+
+export const LinkedInAPI = {
+  optimizeLinkedInProfile,
+
+  getLinkedInHistory,
+
+  deleteLinkedInHistory,
+
+  exportLinkedInPDF,
+};
+
+============================================================
+FILE: src\services\resume.service.ts
+============================================================
+import { api } from "../lib/axios";
+
+export async function analyzeResume(
+  resumeText: string,
+  language = "english"
+) {
+  const response = await api.post(
+    "/api/resume-analysis/analyze",
+    {
+      resumeText,
+      language,
+    }
+  );
+
+  return response.data.analysis;
+}
+
+export async function generateResume(
+  resumeText: string,
+  language = "english"
+) {
+  const response = await api.post(
+    "/api/resume-builder/generate",
+    {
+      resumeText,
+      language,
+    }
+  );
+
+  return response.data.data;
+}
+
+============================================================
+FILE: src\services\resume-builder.service.ts
+============================================================
+import { api } from "../lib/axios";
+
+export interface GenerateResumePayload {
+  resumeText: string;
+  language?: string;
+}
+
+export async function generateResume(
+  payload: GenerateResumePayload
+) {
+  const { data } = await api.post(
+    "/api/resume-builder/generate",
+    {
+      resumeText: payload.resumeText,
+      language: payload.language ?? "english",
+    }
+  );
+
+  return data.data;
+}
+
+export async function getMyResumes() {
+  const { data } = await api.get(
+    "/api/resume-builder"
+  );
+
+  return data.data;
+}
+
+export async function getResume(
+  id: string
+) {
+  if (!id?.trim()) {
+    throw new Error(
+      "Resume ID is required."
+    );
+  }
+
+  const { data } = await api.get(
+    `/api/resume-builder/${id}`
+  );
+
+  return data.data;
+}
+
+export async function updateResume(
+  id: string,
+  payload: unknown
+) {
+  if (!id?.trim()) {
+    throw new Error(
+      "Resume ID is required."
+    );
+  }
+
+  const { data } = await api.put(
+    `/api/resume-builder/${id}`,
+    payload
+  );
+
+  return data.data;
+}
+
+============================================================
+FILE: src\services\resume-history.service.ts
+============================================================
+import type {
+  ResumeData,
+  ResumeVersion,
+} from "../store/resume-store";
+
+const STORAGE_KEY =
+  "careerboost-resume-history";
+
+const MAX_HISTORY_VERSIONS = 10;
+
+/*
+ * Keep a controlled localStorage budget.
+ *
+ * We intentionally stay below the browser's
+ * typical localStorage limit.
+ */
+const MAX_STORAGE_BYTES =
+  3.5 * 1024 * 1024;
+
+export interface LocalResumeVersion
+  extends ResumeVersion {
+  content: ResumeData;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function generateId(): string {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
+    return crypto.randomUUID();
+  }
+
+  return `${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2)}`;
+}
+
+function calculateBytes(
+  value: unknown
+): number {
+  return new Blob([
+    JSON.stringify(value),
+  ]).size;
+}
+
+function normalizeHistory(
+  value: unknown
+): LocalResumeVersion[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter(
+    (item): item is LocalResumeVersion =>
+      Boolean(
+        item &&
+        typeof item === "object" &&
+        typeof item._id === "string" &&
+        typeof item.title === "string" &&
+        typeof item.version === "number" &&
+        typeof item.updatedAt === "string" &&
+        typeof item.createdAt === "string" &&
+        item.content &&
+        typeof item.content === "object"
+      )
+  );
+}
+
+function readHistory(): LocalResumeVersion[] {
+  try {
+    const raw =
+      localStorage.getItem(
+        STORAGE_KEY
+      );
+
+    if (!raw) {
+      return [];
+    }
+
+    return normalizeHistory(
+      JSON.parse(raw)
+    );
+  } catch (error) {
+    console.error(
+      "Failed to read resume history:",
+      error
+    );
+
+    return [];
+  }
+}
+
+function writeHistory(
+  history: LocalResumeVersion[]
+): void {
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(history)
+  );
+}
+
+export function getResumeHistory(): LocalResumeVersion[] {
+  return readHistory();
+}
+
+export function getResumeHistoryById(
+  id: string
+): LocalResumeVersion | null {
+  const history =
+    readHistory();
+
+  return (
+    history.find(
+      (resume) =>
+        resume._id === id
+    ) ?? null
+  );
+}
+
+export function saveResumeSnapshot(
+  data: ResumeData
+): LocalResumeVersion {
+  const existing =
+    readHistory();
+
+  const nextVersion =
+    existing.length > 0
+      ? Math.max(
+          ...existing.map(
+            (resume) =>
+              resume.version
+          )
+        ) + 1
+      : 1;
+
+  const now =
+    new Date().toISOString();
+
+  /*
+   * IMPORTANT:
+   *
+   * This is a COMPLETE resume snapshot.
+   *
+   * Personal information
+   * Education
+   * Experience
+   * Projects
+   * Skills
+   * Photo
+   * etc.
+   *
+   * Everything is restored exactly
+   * when this version is opened.
+   */
+  const snapshot: LocalResumeVersion = {
+    _id: generateId(),
+
+    title:
+      data.fullName?.trim()
+        ? `${data.fullName.trim()} Resume`
+        : "AI Resume",
+
+    version: nextVersion,
+
+    createdAt: now,
+
+    updatedAt: now,
+
+    content: {
+      ...data,
+    },
+  };
+
+  let updatedHistory = [
+    snapshot,
+    ...existing,
+  ];
+
+  /*
+   * Keep maximum history versions.
+   *
+   * Do NOT silently delete old versions.
+   */
+  if (
+    updatedHistory.length >
+    MAX_HISTORY_VERSIONS
+  ) {
+    updatedHistory =
+      updatedHistory.slice(
+        0,
+        MAX_HISTORY_VERSIONS
+      );
+  }
+
+  const requiredBytes =
+    calculateBytes(
+      updatedHistory
+    );
+
+  if (
+    requiredBytes >
+    MAX_STORAGE_BYTES
+  ) {
+    throw new ResumeHistoryStorageError(
+      "RESUME_HISTORY_STORAGE_LIMIT"
+    );
+  }
+
+  try {
+    writeHistory(
+      updatedHistory
+    );
+  } catch (error) {
+    console.error(
+      "Failed to save resume history:",
+      error
+    );
+
+    throw new ResumeHistoryStorageError(
+      "RESUME_HISTORY_STORAGE_LIMIT"
+    );
+  }
+
+  return snapshot;
+}
+
+export function deleteResumeSnapshot(
+  id: string
+): boolean {
+  const history =
+    readHistory();
+
+  const updated =
+    history.filter(
+      (resume) =>
+        resume._id !== id
+    );
+
+  if (
+    updated.length ===
+    history.length
+  ) {
+    return false;
+  }
+
+  writeHistory(updated);
+
+  return true;
+}
+
+export function deleteOldestResumeSnapshot():
+  LocalResumeVersion | null {
+  const history =
+    readHistory();
+
+  if (history.length === 0) {
+    return null;
+  }
+
+  /*
+   * Newest version is index 0.
+   * Oldest version is the last item.
+   */
+  const oldest =
+    history[
+      history.length - 1
+    ];
+
+  const updated =
+    history.slice(0, -1);
+
+  writeHistory(updated);
+
+  return oldest;
+}
+
+export function clearResumeHistory(): void {
+  localStorage.removeItem(
+    STORAGE_KEY
+  );
+}
+
+export function getResumeHistoryStorageInfo() {
+  const history =
+    readHistory();
+
+  const bytes =
+    calculateBytes(history);
+
+  return {
+    versions:
+      history.length,
+
+    maxVersions:
+      MAX_HISTORY_VERSIONS,
+
+    bytes,
+
+    maxBytes:
+      MAX_STORAGE_BYTES,
+
+    usagePercent:
+      Math.min(
+        100,
+        Math.round(
+          (bytes /
+            MAX_STORAGE_BYTES) *
+            100
+        )
+      ),
+
+    storageLimitReached:
+      bytes >=
+      MAX_STORAGE_BYTES,
+  };
+}
+
+export class ResumeHistoryStorageError
+  extends Error {
+  code:
+    | "RESUME_HISTORY_STORAGE_LIMIT";
+
+  constructor(
+    code:
+      | "RESUME_HISTORY_STORAGE_LIMIT"
+  ) {
+    super(
+      "Resume history storage limit reached."
+    );
+
+    this.name =
+      "ResumeHistoryStorageError";
+
+    this.code = code;
+  }
+}
+
+============================================================
+FILE: src\services\user.service.ts
+============================================================
+import { api } from "../lib/axios";
+
+import type {
+  AuthUser,
+} from "../store/auth-store";
+
+/* ==========================================================
+   Update Profile Payload
+========================================================== */
+
+export type UpdateProfilePayload =
+  Partial<
+    Pick<
+      AuthUser,
+      | "name"
+      | "bio"
+      | "title"
+      | "location"
+      | "phone"
+      | "github"
+      | "linkedin"
+      | "portfolio"
+      | "avatar"
+    >
+  >;
+
+/* ==========================================================
+   API Response
+========================================================== */
+
+export interface UpdateProfileResponse {
+  success: boolean;
+
+  message: string;
+
+  user: AuthUser;
+}
+
+/* ==========================================================
+   Update Profile
+========================================================== */
+
+export async function updateProfile(
+  payload: UpdateProfilePayload
+): Promise<UpdateProfileResponse> {
+  const response =
+    await api.put<UpdateProfileResponse>(
+      "/api/user/profile",
+      payload
+    );
+
+  return response.data;
+}
+
+/* ==========================================================
+   Create Profile
+========================================================== */
+
+export async function createProfile(
+  payload: UpdateProfilePayload
+): Promise<UpdateProfileResponse> {
+  const response =
+    await api.post<UpdateProfileResponse>(
+      "/api/user/profile",
+      payload
+    );
+
+  return response.data;
+}
+
+============================================================
+FILE: src\types\career-memory.ts
+============================================================
+import type { CareerProfile } from "./career-profile";
+
+import type { SkillTrend, } from "./skill-trend";
+
+export interface CareerMemory {
+
+  resumeProfile: CareerProfile | null;
+
+  interviewHistory: any[];
+
+  strongestSkills: string[];
+
+  weakestSkills: string[];
+
+  recommendedSkills: string[];
+
+   skillTrends: SkillTrend[];
+
+  confidenceTrend: number[];
+
+  technicalTrend: number[];
+
+  communicationTrend: number[];
+
+  overallTrend: number[];
+
+  aiSuggestions: string[];
+
+  lastUpdated: string;
+
+}
+
+============================================================
+FILE: src\types\career-profile.ts
+============================================================
+export interface CareerProfile {
+
+  profession: string;
+
+  specialization: string;
+
+  careerLevel: string;
+
+  experienceYears: number;
+
+  atsScore: number;
+
+  overallScore: number;
+
+  hiringProbability: string;
+
+  promotionReadinessScore: number;
+
+  technicalScore: number;
+
+  communicationScore: number;
+
+  leadershipScore: number;
+
+  marketReadinessScore: number;
+
+  currentDemand: string;
+
+  futureDemand: string;
+
+  competitionLevel: string;
+
+  automationRisk: string;
+
+  indiaSalary: string;
+
+  remoteSalary: string;
+
+  globalSalary: string;
+
+  strengths: string[];
+
+  weaknesses: string[];
+
+  missingSkills: string[];
+
+  missingKeywords: string[];
+
+  recommendedTechnologies: string[];
+
+  recommendedFrameworks: string[];
+
+  recommendedProjects: string[];
+
+  recommendedCourses: string[];
+
+  recommendedBooks: string[];
+
+  recommendedCertifications: string[];
+
+  portfolioImprovements: string[];
+
+  githubImprovements: string[];
+
+  linkedinImprovements: string[];
+
+  resumeImprovements: string[];
+
+  interviewPreparation: string[];
+
+  roadmap30Days: string[];
+
+  roadmap60Days: string[];
+
+  roadmap90Days: string[];
+
+  roadmap1Year: string[];
+
+  roadmap3Years: string[];
+
+  roadmap5Years: string[];
+
+  recruiterVerdict: string;
+
+  careerAdvice: string;
+
+}
+
+============================================================
+FILE: src\types\cover-letter\cover-letter.types.ts
+============================================================
+/* ==========================================
+   Cover Letter Input
+========================================== */
+
+export interface CoverLetterInput {
+  fullName: string;
+
+  email: string;
+
+  phone: string;
+
+  companyName: string;
+
+  hiringManager: string;
+
+  jobTitle: string;
+
+  experience: string;
+
+  skills: string[];
+
+  achievements: string[];
+
+  projects: string[];
+
+  tone:
+    | "professional"
+    | "friendly"
+    | "executive";
+
+  language:
+    | "english"
+    | "hindi"
+    | "hinglish";
+}
+
+/* ==========================================
+   AI Request
+========================================== */
+
+export interface GenerateCoverLetterRequest {
+  data: CoverLetterInput;
+}
+
+/* ==========================================
+   AI Result
+========================================== */
+
+export interface CoverLetterResult {
+  title: string;
+
+  greeting: string;
+
+  introduction: string;
+
+  body: string;
+
+  closing: string;
+
+  signature: string;
+
+  recruiterScore: number;
+
+  atsKeywords: string[];
+
+  improvements: string[];
+}
+
+/* ==========================================
+   API Response
+========================================== */
+
+export interface GenerateCoverLetterResponse {
+  success: boolean;
+
+  message: string;
+
+  data: CoverLetterResult;
+}
+
+
+
+============================================================
+FILE: src\types\interview\interview.types.ts
+============================================================
+export type InterviewType =
+  | "skill"
+  | "hr"
+  | "mixed";
+
+export type Difficulty =
+  | "beginner"
+  | "intermediate"
+  | "advanced";
+
+export type InterviewLanguage =
+  | "english"
+  | "hindi"
+  | "hinglish"
+  | "urdu";
+
+/* =========================================================
+   Interview History
+========================================================= */
+
+export interface InterviewHistoryItem {
+  question: string;
+
+  answer?: string;
+
+  skill: string;
+
+  competencyId: string;
+
+  competencyName: string;
+
+  difficulty: Difficulty;
+
+  score?: number;
+
+  feedback?: string;
+
+  strengths?: string[];
+
+  weaknesses?: string[];
+
+  provider?: string;
+
+  model?: string;
+
+  createdAt: string;
+}
+
+/* =========================================================
+   Interview Result
+========================================================= */
+
+export interface InterviewResult {
+  overallScore: number;
+
+  technicalScore: number;
+
+  communicationScore: number;
+
+  confidenceScore: number;
+
+  strengths: string[];
+
+  weaknesses: string[];
+
+  improvements: string[];
+
+  recruiterVerdict: string;
+}
+
+/* =========================================================
+   Career Insights
+========================================================= */
+
+export interface CareerInsights {
+  focusAreas: string[];
+
+  recommendedProjects: string[];
+
+  careerAdvice: string;
+
+  targetField?: string;
+
+  recommendedSubjects?: string[];
+
+  highPayingCareerPaths?: string[];
+
+  growthRoadmap?: string;
+}
+
+============================================================
+FILE: src\types\job\job.types.ts
+============================================================
+/* ==========================================================
+   Job Status
+========================================================== */
+
+export type JobStatus =
+  | "wishlist"
+  | "applied"
+  | "screening"
+  | "interview"
+  | "technical"
+  | "hr"
+  | "offer"
+  | "accepted"
+  | "rejected";
+
+/* ==========================================================
+   Employment Type
+========================================================== */
+
+export type EmploymentType =
+  | "full-time"
+  | "part-time"
+  | "internship"
+  | "contract"
+  | "freelance";
+
+/* ==========================================================
+   Work Mode
+========================================================== */
+
+export type WorkMode =
+  | "remote"
+  | "hybrid"
+  | "onsite";
+
+/* ==========================================================
+   Priority
+========================================================== */
+
+export type JobPriority =
+  | "low"
+  | "medium"
+  | "high";
+
+/* ==========================================================
+   Timeline Event
+========================================================== */
+
+export interface JobTimelineItem {
+  id: string;
+
+  title: string;
+
+  description: string;
+
+  status: JobStatus;
+
+  createdAt: string;
+}
+
+/* ==========================================================
+   Interview Schedule
+========================================================== */
+
+export interface InterviewSchedule {
+  date: string;
+
+  time: string;
+
+  interviewer?: string;
+
+  meetingLink?: string;
+
+  notes?: string;
+}
+
+/* ==========================================================
+   Salary
+========================================================== */
+
+export interface SalaryRange {
+  min: number;
+
+  max: number;
+
+  currency: string;
+}
+
+/* ==========================================================
+   Main Job Model
+========================================================== */
+
+export interface JobItem {
+  id: string;
+
+  company: string;
+
+  position: string;
+
+  location: string;
+
+  employmentType: EmploymentType;
+
+  workMode: WorkMode;
+
+  priority: JobPriority;
+
+  status: JobStatus;
+
+  salary?: SalaryRange;
+
+  appliedDate: string;
+
+  deadline?: string;
+
+  jobUrl?: string;
+
+  description?: string;
+
+  notes?: string;
+
+  interview?: InterviewSchedule;
+
+  timeline: JobTimelineItem[];
+
+  createdAt: string;
+
+  updatedAt: string;
+}
+
+/* ==========================================================
+   Dashboard Statistics
+========================================================== */
+
+export interface JobDashboardStats {
+  total: number;
+
+  applied: number;
+
+  interviews: number;
+
+  offers: number;
+
+  accepted: number;
+
+  rejected: number;
+
+  wishlist: number;
+}
+
+/* ==========================================================
+   Filters
+========================================================== */
+
+export interface JobFilter {
+  search: string;
+
+  status: JobStatus | "all";
+
+  workMode: WorkMode | "all";
+
+  employmentType:
+    | EmploymentType
+    | "all";
+
+  priority:
+    | JobPriority
+    | "all";
+
+  sortBy:
+    | "latest"
+    | "oldest"
+    | "deadline"
+    | "salary";
+}
+
+/* ==========================================================
+   Create Request
+========================================================== */
+
+export interface CreateJobRequest {
+  company: string;
+
+  position: string;
+
+  location: string;
+
+  employmentType: EmploymentType;
+
+  workMode: WorkMode;
+
+  priority?: JobPriority;
+
+  status?: JobStatus;
+
+  salary?: SalaryRange;
+
+  deadline?: string;
+
+  jobUrl?: string;
+
+  description?: string;
+
+  notes?: string;
+}
+
+/* ==========================================================
+   Update Request
+========================================================== */
+
+export interface UpdateJobRequest
+  extends Partial<CreateJobRequest> {
+  status?: JobStatus;
+
+  interview?: InterviewSchedule;
+}
+
+
+/* ==========================================================
+   API Response
+========================================================== */
+
+export interface JobResponse {
+  success: boolean;
+
+  message: string;
+
+  data: JobItem;
+}
+
+export interface JobListResponse {
+  success: boolean;
+
+  message: string;
+
+  data: JobItem[];
+}
+
+export interface DashboardStatsResponse {
+  success: boolean;
+
+  message: string;
+
+  data: JobDashboardStats;
+}
+
+============================================================
+FILE: src\types\linkedin\linkedin.types.ts
+============================================================
+
+
+
+
+
+
+
+/* ==========================================
+   LinkedIn Profile
+========================================== */
+
+export interface LinkedInProfileInput {
+  fullName: string;
+
+  headline: string;
+
+  currentRole: string;
+
+  yearsOfExperience: number;
+
+  location: string;
+
+  skills: string[];
+
+  summary: string;
+
+  achievements: string[];
+
+  targetRole: string;
+
+  industry: string;
+}
+
+/* ==========================================
+   AI Optimization Request
+========================================== */
+
+export interface LinkedInOptimizeRequest {
+  profile: LinkedInProfileInput;
+
+  tone:
+    | "professional"
+    | "friendly"
+    | "executive";
+
+  language:
+    | "english"
+    | "hindi"
+    | "hinglish";
+}
+
+/* ==========================================
+   AI Response
+========================================== */
+
+export interface LinkedInOptimizationResult {
+  optimizedHeadline: string;
+
+  optimizedSummary: string;
+
+  optimizedSkills: string[];
+
+  recruiterKeywords: string[];
+
+  atsKeywords: string[];
+
+  profileScore: number;
+
+  strengths: string[];
+
+  improvements: string[];
+
+  seoSuggestions: string[];
+
+  networkingTips: string[];
+
+  callToAction: string;
+}
+
+/* ==========================================
+   API Response
+========================================== */
+
+export interface LinkedInOptimizeResponse {
+  success: boolean;
+
+  message: string;
+
+  data: LinkedInOptimizationResult;
+}
+
+============================================================
+FILE: src\types\resume-analysis.ts
+============================================================
+export interface ResumeAnalysisResult {
+  profession: string;
+  careerLevel: string;
+  experienceYears: number;
+
+  atsScore: number;
+  resumeScore: number;
+  technicalScore: number;
+  communicationScore: number;
+  leadershipScore: number;
+  marketReadinessScore: number;
+  promotionReadinessScore: number;
+  overallScore: number;
+
+  currentDemand: string;
+  futureDemand: string;
+  competitionLevel: string;
+  automationRisk: string;
+
+  indiaSalary: string;
+  remoteSalary: string;
+  globalSalary: string;
+
+  strengths: string[];
+  weaknesses: string[];
+  missingSkills: string[];
+  missingKeywords: string[];
+
+  recommendedTechnologies: string[];
+  recommendedFrameworks: string[];
+  recommendedCertifications: string[];
+  recommendedCourses: string[];
+  recommendedBooks: string[];
+  recommendedProjects: string[];
+
+  portfolioImprovements: string[];
+  githubImprovements: string[];
+  linkedinImprovements: string[];
+  resumeImprovements: string[];
+  interviewPreparation: string[];
+
+  careerAdvice: string;
+
+  roadmap30Days: string[];
+  roadmap60Days: string[];
+  roadmap90Days: string[];
+  roadmap1Year: string[];
+  roadmap3Years: string[];
+  roadmap5Years: string[];
+
+  recruiterVerdict: string;
+
+  hiringProbability: string;
+
+  focusAreas: string[];
+
+nextBestRole: string;
+
+learningPriority: string[];
+
+marketTrend: string;
+
+personalizedCoachMessage: string;
+}
+
+============================================================
+FILE: src\types\skill-trend.ts
+============================================================
+export interface SkillTrend {
+
+  skill: string;
+
+  currentScore: number;
+
+  previousScore: number;
+
+  improvement: number;
+
+  trend:
+
+    | "improving"
+
+    | "stable"
+
+    | "declining";
+
+  recommendation: string;
+
+}

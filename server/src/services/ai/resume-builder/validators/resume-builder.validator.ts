@@ -3,26 +3,55 @@ import {
 } from "../parser/resume-builder.parser.js";
 
 export function validateResumeBuilder(
-  data: ResumeBuilderResult
-): boolean {
+  data: any
+): ResumeBuilderResult {
+  if (!data || typeof data !== "object") {
+    throw new Error("Invalid Resume Builder response object.");
+  }
 
-  return (
-    typeof data.professionalSummary === "string" &&
+  return {
+    professionalSummary:
+      typeof data.professionalSummary === "string"
+        ? data.professionalSummary
+        : typeof data.summary === "string"
+        ? data.summary
+        : "",
 
-    Array.isArray(data.atsOptimizedSkills) &&
+    atsOptimizedSkills: Array.isArray(data.atsOptimizedSkills)
+      ? data.atsOptimizedSkills
+      : Array.isArray(data.skills)
+      ? data.skills
+      : [],
 
-    Array.isArray(data.experienceBulletPoints) &&
+    experienceBulletPoints: Array.isArray(data.experienceBulletPoints)
+      ? data.experienceBulletPoints
+      : Array.isArray(data.experience)
+      ? data.experience
+      : [],
 
-    Array.isArray(data.projectDescriptions) &&
+    projectDescriptions: Array.isArray(data.projectDescriptions)
+      ? data.projectDescriptions
+      : Array.isArray(data.projects)
+      ? data.projects
+      : [],
 
-    (
-      typeof data.achievementSuggestions === "string" ||
-      Array.isArray(data.achievementSuggestions)
-    ) &&
+    achievementSuggestions: Array.isArray(data.achievementSuggestions) || typeof data.achievementSuggestions === "string"
+      ? data.achievementSuggestions
+      : Array.isArray(data.achievements)
+      ? data.achievements
+      : "",
 
-    Array.isArray(data.resumeKeywords) &&
+    resumeKeywords: Array.isArray(data.resumeKeywords)
+      ? data.resumeKeywords
+      : Array.isArray(data.keywords)
+      ? data.keywords
+      : [],
 
-    typeof data.recruiterImpression === "string"
-  );
-
+    recruiterImpression:
+      typeof data.recruiterImpression === "string"
+        ? data.recruiterImpression
+        : typeof data.impression === "string"
+        ? data.impression
+        : "Good candidate profile.",
+  };
 }

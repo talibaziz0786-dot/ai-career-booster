@@ -1,95 +1,200 @@
-import type { ResumeData } from "../store/resume-store";
+import type {
+  ResumeData,
+} from "../store/resume-store";
+
+function toText(
+  value: unknown
+): string {
+  if (
+    typeof value === "string"
+  ) {
+    return value;
+  }
+
+  if (
+    Array.isArray(value)
+  ) {
+    return value
+      .filter(
+        (item) =>
+          typeof item ===
+          "string"
+      )
+      .join(", ");
+  }
+
+  return "";
+}
+
+function mergeText(
+  existing: string,
+  generated: unknown
+): string {
+  const value =
+    toText(generated).trim();
+
+  return value
+    ? value
+    : existing;
+}
 
 export function mapAIResumeToResumeData(
-  ai: Record<string, any>
+  ai: Record<string, unknown>,
+  existing?: ResumeData
 ): ResumeData {
+  const base: ResumeData =
+    existing ?? {
+      photo: "",
+      fullName: "",
+      email: "",
+      phone: "",
+      location: "",
+
+      linkedin: "",
+      github: "",
+      portfolio: "",
+
+      summary: "",
+
+      skills: "",
+      experience: "",
+      education: "",
+
+      jobTitle: "",
+
+      projects: "",
+      certifications: "",
+      achievements: "",
+      languages: "",
+    };
+
+  const personalInfo =
+    typeof ai.personalInfo ===
+    "object" &&
+    ai.personalInfo !== null
+      ? (ai.personalInfo as Record<
+          string,
+          unknown
+        >)
+      : {};
+
   return {
-    photo: ai.photo ?? "",
+    /*
+     * NEVER let AI erase existing
+     * personal information.
+     */
+    photo: base.photo,
 
     fullName:
-      ai.fullName ??
-      ai.personalInfo?.fullName ??
-      "",
+      mergeText(
+        base.fullName,
+        ai.fullName ??
+          personalInfo.fullName
+      ),
 
     email:
-      ai.email ??
-      ai.personalInfo?.email ??
-      "",
+      mergeText(
+        base.email,
+        ai.email ??
+          personalInfo.email
+      ),
 
     phone:
-      ai.phone ??
-      ai.personalInfo?.phone ??
-      "",
+      mergeText(
+        base.phone,
+        ai.phone ??
+          personalInfo.phone
+      ),
 
     location:
-      ai.location ??
-      ai.personalInfo?.location ??
-      "",
+      mergeText(
+        base.location,
+        ai.location ??
+          personalInfo.location
+      ),
 
     linkedin:
-      ai.linkedin ??
-      ai.personalInfo?.linkedin ??
-      "",
+      mergeText(
+        base.linkedin,
+        ai.linkedin ??
+          personalInfo.linkedin
+      ),
 
     github:
-      ai.github ??
-      ai.personalInfo?.github ??
-      "",
+      mergeText(
+        base.github,
+        ai.github ??
+          personalInfo.github
+      ),
 
     portfolio:
-      ai.portfolio ??
-      ai.personalInfo?.portfolio ??
-      "",
+      mergeText(
+        base.portfolio,
+        ai.portfolio ??
+          personalInfo.portfolio
+      ),
 
     jobTitle:
-      ai.jobTitle ??
-      ai.personalInfo?.jobTitle ??
-      "",
+      mergeText(
+        base.jobTitle,
+        ai.jobTitle ??
+          personalInfo.jobTitle
+      ),
 
+    /*
+     * AI enhancement fields.
+     */
     summary:
-      ai.professionalSummary ??
-      ai.summary ??
-      "",
+      mergeText(
+        base.summary,
+        ai.professionalSummary ??
+          ai.summary
+      ),
 
-    skills: Array.isArray(ai.atsOptimizedSkills)
-      ? ai.atsOptimizedSkills.join(", ")
-      : Array.isArray(ai.skills)
-      ? ai.skills.join(", ")
-      : ai.skills ?? "",
+    skills:
+      mergeText(
+        base.skills,
+        ai.atsOptimizedSkills ??
+          ai.skills
+      ),
 
-    experience: Array.isArray(ai.experienceBulletPoints)
-      ? ai.experienceBulletPoints.join("\n")
-      : Array.isArray(ai.experience)
-      ? ai.experience.join("\n")
-      : ai.experience ?? "",
+    experience:
+      mergeText(
+        base.experience,
+        ai.experienceBulletPoints ??
+          ai.experience
+      ),
 
-    education: Array.isArray(ai.education)
-      ? ai.education
-          .map(
-            (x: any) =>
-              `${x.degree ?? ""} - ${x.institute ?? ""}`
-          )
-          .join("\n")
-      : ai.education ?? "",
+    education:
+      mergeText(
+        base.education,
+        ai.education
+      ),
 
-    projects: Array.isArray(ai.projectDescriptions)
-      ? ai.projectDescriptions.join("\n\n")
-      : Array.isArray(ai.projects)
-      ? ai.projects.join("\n\n")
-      : ai.projects ?? "",
+    projects:
+      mergeText(
+        base.projects,
+        ai.projectDescriptions ??
+          ai.projects
+      ),
 
-    certifications: Array.isArray(ai.certifications)
-      ? ai.certifications.join("\n")
-      : ai.certifications ?? "",
+    certifications:
+      mergeText(
+        base.certifications,
+        ai.certifications
+      ),
 
-    achievements: Array.isArray(ai.achievementSuggestions)
-      ? ai.achievementSuggestions.join("\n")
-      : Array.isArray(ai.achievements)
-      ? ai.achievements.join("\n")
-      : ai.achievements ?? "",
+    achievements:
+      mergeText(
+        base.achievements,
+        ai.achievementSuggestions ??
+          ai.achievements
+      ),
 
-    languages: Array.isArray(ai.languages)
-      ? ai.languages.join(", ")
-      : ai.languages ?? "",
+    languages:
+      mergeText(
+        base.languages,
+        ai.languages
+      ),
   };
-} 
+}

@@ -1,28 +1,37 @@
-import express from "express";
+import { Router } from "express";
 
 import {
   getQuestion,
   generateFeedback,
 } from "../controllers/interview.controller.js";
 
-import { authMiddleware } from "../middleware/auth.middleware.js";
-import { checkAIUsage } from "../middleware/ai-usage.middleware.js";
+import {
+  authMiddleware,
+} from "../middleware/auth.middleware.js";
 
-const router = express.Router();
+const router = Router();
 
-// Generate Interview Question
+/**
+ * Generate next AI interview question.
+ *
+ * Quota enforcement is handled by the
+ * centralized AI orchestrator.
+ */
 router.post(
   "/question",
   authMiddleware,
-  checkAIUsage("interview"),
   getQuestion
 );
 
-// Generate AI Feedback
+/**
+ * Generate complete interview feedback.
+ *
+ * Quota enforcement is handled by the
+ * centralized AI orchestrator.
+ */
 router.post(
   "/feedback",
   authMiddleware,
-  
   generateFeedback
 );
 

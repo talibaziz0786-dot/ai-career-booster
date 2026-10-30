@@ -1,63 +1,85 @@
-import type { Request, Response } from "express";
-import { askAI } from "../services/ai/ai-manager.service.js";
+﻿import type { Response } from "express";
+import type { AuthRequest } from "../middleware/auth.middleware.js";
+
+import {
+  askAI,
+} from "../lib/ai/ai-orchestrator.js";
 
 export const getCareerInsights = async (
-  req: Request,
+  req: AuthRequest,
   res: Response
 ) => {
   try {
     const {
       overallScore,
-      strengths,
-      weaknesses,
+      strengths = [],
+      weaknesses = [],
     } = req.body;
 
-    const result = await askAI(`
+    const prompt = `
 You are a Senior FAANG Career Coach.
 
 Interview Score:
 ${overallScore}
 
 Strengths:
-${strengths?.join(", ")}
+${strengths.join(", ")}
 
 Weaknesses:
-${weaknesses?.join(", ")}
+${weaknesses.join(", ")}
 
-Return ONLY JSON.
+Return ONLY valid JSON.
 
 {
   "focusAreas": [],
   "recommendedProjects": [],
   "careerAdvice": ""
 }
-`);
+`;
+
+    if (!req.user) {
+    return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+    });
+}
+
+const result = await askAI({
+    userId: req.user.id,
+    prompt,
+});
 
     const rawContent =
-  result.content ?? "";
+      result.content ?? "";
 
-const jsonMatch =
-  rawContent.match(/\{[\s\S]*\}/);
+    const jsonMatch =
+      rawContent.match(/\{[\s\S]*\}/);
 
     if (!jsonMatch) {
-      throw new Error("Invalid AI response");
+      throw new Error(
+        "Invalid AI response"
+      );
     }
 
     res.json({
       success: true,
-      insights: JSON.parse(jsonMatch[0]),
+      insights: JSON.parse(
+        jsonMatch[0]
+      ),
     });
 
   } catch (error) {
 
-   console.error(
-    "Career Insight Error:",
-    error
-  );
+    console.error(
+      "Career Insight Error:",
+      error
+    );
 
     res.status(500).json({
       success: false,
-      message: "Failed to generate insights",
+      message:
+        "Failed to generate insights",
     });
+
   }
 };

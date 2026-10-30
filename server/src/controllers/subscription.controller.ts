@@ -8,16 +8,20 @@ export const getMySubscription = async (
   try {
     const user = (req as any).user;
 
-    const subscription =
+    let subscription =
       await Subscription.findOne({
         user: user.id,
       });
 
     if (!subscription) {
-      return res.status(404).json({
-        success: false,
-        message: "Subscription not found",
-      });
+      subscription =
+        await Subscription.create({
+          user: user.id,
+
+          plan: "trial",
+
+          status: "active",
+        });
     }
 
     return res.status(200).json({

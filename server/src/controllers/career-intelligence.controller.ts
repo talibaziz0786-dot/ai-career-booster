@@ -1,89 +1,69 @@
-import { Request, Response } from "express";
+import type {
+Request,
+Response,
+} from "express";
 
-import { generateCareerIntelligence } from "../services/ai/career-intelligence.service.js";
+import {
+generateCareerIntelligence,
+} from "../services/ai/career-intelligence.service.js";
 
 export async function careerIntelligenceController(
-
-  req: Request,
-
-  res: Response
-
+req: Request,
+res: Response
 ) {
+try {
+const {
+resumeText,
+} = req.body;
 
-  try {
 
-    const {
+if (
+  typeof resumeText !== "string" ||
+  resumeText.trim().length === 0
+) {
+  return res.status(400).json({
+    success: false,
+    message:
+      "Resume text is required.",
+  });
+}
 
-      resumeText,
+const userId =
+  req.user?.id;
 
-      userId,
+if (!userId) {
+  return res.status(401).json({
+    success: false,
+    message:
+      "Authentication required.",
+  });
+}
 
-    } = req.body;
+const cacheKey =
+  `career-intelligence:${userId}`;
 
-    if (
+const profile =
+  await generateCareerIntelligence(
+    userId,
+    cacheKey,
+    resumeText
+  );
 
-      !resumeText ||
+return res.status(200).json({
+  success: true,
+  profile,
+});
 
-      !userId
+} catch (error) {
+console.error(
+"Career Intelligence Error:",
+error
+);
 
-    ) {
-
-      return res.status(400).json({
-
-        success: false,
-
-        message:
-
-          "resumeText and userId are required.",
-
-      });
-
-    }
-
-    const cacheKey =
-
-      `career:${userId}`;
-
-    const profile =
-
-      await generateCareerIntelligence(
-
-        cacheKey,
-
-        resumeText
-
-      );
-
-    return res.json({
-
-      success: true,
-
-      profile,
-
-    });
-
-  }
-
-  catch (error) {
-
-    console.error(
-
-      "Career Intelligence Error:",
-
-      error
-
-    );
-
-    return res.status(500).json({
-
-      success: false,
-
-      message:
-
-        "Failed to generate career intelligence.",
-
-    });
-
-  }
-
+return res.status(500).json({
+  success: false,
+  message:
+    "Failed to generate career intelligence.",
+});
+}
 }

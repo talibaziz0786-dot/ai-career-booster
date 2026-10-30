@@ -1,22 +1,4 @@
-import axios from "axios";
-
-const API =
-  import.meta.env.VITE_API_URL ??
-  "http://localhost:5000";
-
-const usageApi = axios.create({
-  baseURL: `${API}/api/usage`,
-});
-
-usageApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
-});
+import { api } from "../lib/axios";
 
 export interface UsageResponse {
   success: boolean;
@@ -48,12 +30,15 @@ export interface UsageResponse {
   } | null;
 
   trialEnd?: string;
+
   expiresAt?: string;
 }
 
 export async function getUsage() {
   const { data } =
-    await usageApi.get<UsageResponse>("/me");
+    await api.get<UsageResponse>(
+      "/api/usage/me"
+    );
 
   return data;
 }

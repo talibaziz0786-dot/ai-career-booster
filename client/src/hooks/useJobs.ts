@@ -3,47 +3,29 @@ import {
   useState,
 } from "react";
 
-import { api }
-from "../lib/axios";
+import { JobAPI } from "../services/job/job.api";
+
+import type {
+  JobItem,
+} from "../types/job/job.types";
 
 export function useJobs() {
-
-  const [jobs,setJobs] =
-    useState([]);
-
-  const [loading,setLoading] =
-    useState(true);
+  const [jobs, setJobs] = useState<JobItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const data = await JobAPI.getJobs();
+        setJobs(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    const fetchJobs =
-      async () => {
-
-        try {
-
-          const response =
-            await api.get(
-              "/api/jobs/all"
-            );
-
-          setJobs(
-            response.data.jobs
-          );
-
-        } catch(error) {
-
-          console.error(error);
-
-        } finally {
-
-          setLoading(false);
-
-        }
-
-      };
-
-    fetchJobs();
-
+    void fetchJobs();
   }, []);
 
   return {

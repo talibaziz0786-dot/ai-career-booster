@@ -1,51 +1,135 @@
 import {
+  ResponsiveContainer,
   LineChart,
   Line,
   XAxis,
   Tooltip,
-  ResponsiveContainer,
+  CartesianGrid,
 } from "recharts";
 
-const data = [
-  { month: "Jan", score: 72 },
-  { month: "Feb", score: 78 },
-  { month: "Mar", score: 85 },
-  { month: "Apr", score: 92 },
-];
+import {
+  TrendingUp,
+} from "lucide-react";
+
+import {
+  useResumeAnalytics,
+} from "../../hooks/useResumeAnalytics";
 
 export default function ResumeStatsChart() {
+  const {
+    data = [],
+    isLoading,
+    isError,
+  } = useResumeAnalytics();
+
+  if (isLoading) {
+    return (
+      <div
+        className="
+        h-[420px]
+        animate-pulse
+        rounded-3xl
+        bg-slate-200
+        dark:bg-white/5
+        "
+      />
+    );
+  }
+
+  if (isError) {
+    return (
+      <div
+        className="
+        rounded-3xl
+        border
+        border-red-500/20
+        p-10
+        text-red-500
+        "
+      >
+        Failed to load analytics.
+      </div>
+    );
+  }
+
   return (
-    <div
+    <section
       className="
-      rounded-3xl
+      rounded-[32px]
       border
       border-slate-200
+
       bg-white
+
       p-8
-      shadow-lg
+
+      shadow-xl
 
       dark:border-white/10
-      dark:bg-white/5
-    "
+      dark:bg-[#101827]
+      "
     >
-      <h3 className="mb-8 text-xl font-bold text-slate-900 dark:text-white">
-        Resume Growth
-      </h3>
+      <div className="mb-8 flex items-center justify-between">
+
+        <div>
+
+          <p className="text-sm text-slate-500">
+            Resume Performance
+          </p>
+
+          <h2 className="mt-1 text-2xl font-bold dark:text-white">
+            Resume Growth
+          </h2>
+
+        </div>
+
+        <div
+          className="
+          flex
+          h-14
+          w-14
+          items-center
+          justify-center
+
+          rounded-2xl
+
+          bg-cyan-500/10
+
+          text-cyan-500
+          "
+        >
+          <TrendingUp />
+        </div>
+
+      </div>
 
       <ResponsiveContainer
         width="100%"
-        height={300}
+        height={320}
       >
         <LineChart data={data}>
+
+          <CartesianGrid
+            strokeDasharray="3 3"
+          />
+
           <XAxis dataKey="month" />
+
           <Tooltip />
+
           <Line
             type="monotone"
             dataKey="score"
             stroke="#06b6d4"
+            strokeWidth={4}
+            dot={{
+              r: 5,
+            }}
           />
+
         </LineChart>
       </ResponsiveContainer>
-    </div>
+
+    </section>
   );
 }

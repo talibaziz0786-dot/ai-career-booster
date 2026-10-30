@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useThemeStore } from "../../store/theme-store";
+import { useSettingsStore } from "../../store/settings-store";
 
 interface Props {
   children: React.ReactNode;
@@ -8,22 +8,16 @@ interface Props {
 export default function ThemeProvider({
   children,
 }: Props) {
-  const theme =
-    useThemeStore(
-      (state) => state.theme
-    );
+  const darkMode = useSettingsStore(
+    (state) => state.settings.darkMode
+  );
 
   useEffect(() => {
-    if (theme === "dark") {
-      document.documentElement.classList.add(
-        "dark"
-      );
-    } else {
-      document.documentElement.classList.remove(
-        "dark"
-      );
-    }
-  }, [theme]);
+    document.documentElement.classList.toggle(
+      "dark",
+      darkMode
+    );
+  }, [darkMode]);
 
   return <>{children}</>;
 }

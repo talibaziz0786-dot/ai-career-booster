@@ -1,41 +1,86 @@
 import { create } from "zustand";
 
-type Difficulty =
-  | "beginner"
-  | "intermediate"
-  | "advanced";
+import type {
+  Difficulty,
+  InterviewLanguage,
+  InterviewType,
+  InterviewHistoryItem,
+  InterviewResult,
+  CareerInsights,
+} from "../types/interview/interview.types";
 
-  interface InterviewResult {
-  overallScore: number;
-  technicalScore: number;
-  communicationScore: number;
-  confidenceScore: number;
-  strengths: string[];
-  weaknesses: string[];
-  improvements: string[];
-  recruiterVerdict: string;
-}
+// ==========================================
+// Interview Store
+// ==========================================
 
-interface InterviewStore {
+export interface InterviewStore {
+  // ==========================================
+  // SETTINGS
+  // ==========================================
+
+  industry: string | null;
+
   category: string;
 
   difficulty: Difficulty;
+
+  language: InterviewLanguage;
+
+  interviewType: InterviewType;
+
+  resumeSkills: string[];
+
+  selectedSkills: string[];
+
+  customTopic: string;
+
+  // ==========================================
+  // CURRENT SESSION
+  // ==========================================
 
   currentQuestion: string;
 
   currentAnswer: string;
 
-  currentStep: number;
+  currentOptions: string[];
 
-  
+  correctAnswer: string;
+
+  currentStep: number;
 
   totalQuestions: number;
 
   interviewStarted: boolean;
 
-  loading: boolean;
+  // ==========================================
+  // INDUSTRY-SPECIFIC DATA
+  // ==========================================
 
-  feedbackLoading: boolean;
+  strengthsIndustry: {
+    [industry: string]: string[];
+  };
+
+  weaknessesIndustry: {
+    [industry: string]: string[];
+  };
+
+  // ==========================================
+  // LEGACY
+  // ==========================================
+
+  questions: string[];
+
+  answers: string[];
+
+  // ==========================================
+  // ENTERPRISE HISTORY
+  // ==========================================
+
+  history: InterviewHistoryItem[];
+
+  // ==========================================
+  // EVALUATION
+  // ==========================================
 
   score: number;
 
@@ -47,150 +92,169 @@ interface InterviewStore {
 
   improvedAnswer: string;
 
-  resumeSkills: string[];
+  interviewResult: InterviewResult | null;
 
-  questions: string[];
+  careerInsights: CareerInsights | null;
 
-  answers: string[];
+  // ==========================================
+  // LOADING
+  // ==========================================
 
-  selectedSkills: string[];
+  loading: boolean;
 
-       careerInsights: {
-  focusAreas: string[];
-  recommendedProjects: string[];
-  careerAdvice: string;
-} | null;
+  feedbackLoading: boolean;
 
+  // ==========================================
+  // SETTINGS METHODS
+  // ==========================================
 
+  setIndustry(industry: string | null): void;
 
-  language:
-  | "english"
-  | "hindi"
-  | "hinglish"
-  | "urdu";
+  setCategory(category: string): void;
 
-  interviewType:
-  | "skill"
-  | "hr"
-  | "mixed";
+  setDifficulty(difficulty: Difficulty): void;
 
- interviewResult: InterviewResult | null;
+  setLanguage(language: InterviewLanguage): void;
 
+  setInterviewType(type: InterviewType): void;
 
-  setCareerInsights: (
-  insights: any
-) => void;
+  setResumeSkills(skills: string[]): void;
 
- setInterviewType: (
-  type:
-    | "skill"
-    | "hr"
-    | "mixed"
-) => void;
+  setSelectedSkills(skills: string[]): void;
 
-setSelectedSkills: (
-  skills: string[]
-) => void;
+  setCustomTopic(topic: string): void;
 
- setLanguage: (
- language:
-  | "english"
-  | "hindi"
-  | "hinglish"
-  | "urdu"
-) => void;
+  // ==========================================
+  // QUESTION METHODS
+  // ==========================================
 
- clearInterviewSession: () => void;
+  setQuestion(question: string): void;
 
-setInterviewResult: (
-  result: InterviewResult
-) => void;
+  addQuestion(question: string): void;
 
-  addAnswer: (
- answer: string
-) => void;
+  setQuestions(questions: string[]): void;
 
-setQuestions: (
-  questions: string[]
-) => void;
+  // ==========================================
+  // ANSWER METHODS
+  // ==========================================
 
-addQuestion: (
-  question: string
-) => void;
+  setAnswer(answer: string): void;
 
-setResumeSkills: (
-  skills: string[]
-) => void;
+  addAnswer(answer: string): void;
 
-  questionHistory: string[];
+  // ==========================================
+  // HISTORY METHODS
+  // ==========================================
 
-addQuestionToHistory: (
-  question: string
-) => void;
+  createHistoryItem(
+    item: Omit<InterviewHistoryItem, "createdAt">
+  ): InterviewHistoryItem;
 
-  startInterview: () => void;
+  addHistoryItem(item: InterviewHistoryItem): void;
 
-  endInterview: () => void;
-
-  setLoading: (
-    loading: boolean
-  ) => void;
-
-  setFeedbackLoading: (
- loading: boolean
-) => void;
-
-  setQuestion: (
-    question: string
-  ) => void;
-
-  setAnswer: (
+  updateHistoryAnswer(
+    index: number,
     answer: string
-  ) => void;
+  ): void;
 
-  setDifficulty: (
-    difficulty: Difficulty
-  ) => void;
-
-setCategory: (
-  category: string
-) => void;
-
-  setEvaluation: (
+  updateHistoryEvaluation(
+    index: number,
     data: {
-      score: number;
-      strengths: string[];
-      weaknesses: string[];
-      feedback: string;
-      improvedAnswer: string;
+      score?: number;
+      strengths?: string[];
+      weaknesses?: string[];
+      feedback?: string;
     }
-  ) => void;
+  ): void;
 
-  nextQuestion: () => void;
+  setHistory(history: InterviewHistoryItem[]): void;
 
-  
+  clearHistory(): void;
 
-  previousQuestion: () => void;
+  // ==========================================
+  // NAVIGATION
+  // ==========================================
+
+  nextQuestion(): void;
+
+  previousQuestion(): void;
+
+  // ==========================================
+  // LOADING
+  // ==========================================
+
+  setLoading(loading: boolean): void;
+
+  setFeedbackLoading(loading: boolean): void;
+
+  // ==========================================
+  // EVALUATION
+  // ==========================================
+
+  setEvaluation(data: {
+    score: number;
+    strengths: string[];
+    weaknesses: string[];
+    feedback: string;
+    improvedAnswer: string;
+  }): void;
+
+  setInterviewResult(result: InterviewResult): void;
+
+  setCareerInsights(insights: CareerInsights): void;
+
+  setCurrentOptions(options: string[]): void;
+
+  setCorrectAnswer(answer: string): void;
+
+  // ==========================================
+  // SESSION
+  // ==========================================
+
+  startInterview(): void;
+
+  endInterview(): void;
+
+  clearInterviewSession(): void;
 }
 
+// ==========================================
+// Zustand Store
+// ==========================================
 
+export const useInterviewStore = create<InterviewStore>(
+  (set) => ({
+    // ==========================================
+    // SETTINGS
+    // ==========================================
 
-export const useInterviewStore =
-  create<InterviewStore>((set) => ({
+    industry: null,
+
     category: "React",
-
-    language:
-  "english",
-
-  interviewType: "mixed",
 
     difficulty: "beginner",
 
-    currentQuestion: 
-       "",
+    language: "english",
 
-      
+    interviewType: "mixed",
+
+    resumeSkills: [],
+
+    selectedSkills: [],
+
+    customTopic: "",
+
+    // ==========================================
+    // CURRENT SESSION
+    // ==========================================
+
+    currentQuestion: "",
+
     currentAnswer: "",
+
+    currentOptions: [],
+
+    correctAnswer: "",
 
     currentStep: 1,
 
@@ -198,11 +262,31 @@ export const useInterviewStore =
 
     interviewStarted: false,
 
-    questionHistory: [],
+    // ==========================================
+    // INDUSTRY-SPECIFIC DATA
+    // ==========================================
 
-    loading: false,
+    strengthsIndustry: {},
 
-    feedbackLoading: false,
+    weaknessesIndustry: {},
+
+    // ==========================================
+    // LEGACY
+    // ==========================================
+
+    questions: [],
+
+    answers: [],
+
+    // ==========================================
+    // ENTERPRISE HISTORY
+    // ==========================================
+
+    history: [],
+
+    // ==========================================
+    // EVALUATION
+    // ==========================================
 
     score: 0,
 
@@ -216,214 +300,328 @@ export const useInterviewStore =
 
     interviewResult: null,
 
-    resumeSkills: [],
-
-    selectedSkills: [],
-
-    questions: [],
-
-    answers: [],
-
     careerInsights: null,
 
+    // ==========================================
+    // LOADING
+    // ==========================================
 
-    addAnswer: (
- answer
-) =>
- set((state) => ({
-   answers: [
-     ...state.answers,
-     answer,
-   ],
- })),
- 
- setInterviewType: (
-  type
-) =>
-  set({
-    interviewType: type,
-  }),
+    loading: false,
 
-    setResumeSkills: (
-  skills
-) =>
-  set({
-    resumeSkills: skills,
-  }),
+    feedbackLoading: false,
 
-  
-startInterview: () =>
-  set({
-    interviewStarted: true,
-  }),
+    // ==========================================
+    // SETTINGS METHODS
+    // ==========================================
 
-      addQuestionToHistory: (
-  question
-) =>
-  set((state) => ({
-    questionHistory: [
-      ...state.questionHistory,
-      question,
-    ],
-  })),
-
-    endInterview: () =>
+    setIndustry: (industry) =>
       set({
-        interviewStarted: false,
+        industry,
       }),
+
+    setCategory: (category) =>
+      set({
+        category,
+      }),
+
+    setDifficulty: (difficulty) =>
+      set({
+        difficulty,
+      }),
+
+    setLanguage: (language) =>
+      set({
+        language,
+      }),
+
+    setInterviewType: (interviewType) =>
+      set({
+        interviewType,
+      }),
+
+    setResumeSkills: (resumeSkills) =>
+      set({
+        resumeSkills,
+      }),
+
+    setSelectedSkills: (selectedSkills) =>
+      set({
+        selectedSkills,
+      }),
+
+    setCustomTopic: (customTopic) =>
+      set({
+        customTopic,
+      }),
+
+    // ==========================================
+    // QUESTION METHODS
+    // ==========================================
+
+    setQuestion: (currentQuestion) =>
+      set({
+        currentQuestion,
+      }),
+
+    addQuestion: (question) =>
+      set((state) => ({
+        questions: [
+          ...state.questions,
+          question,
+        ],
+      })),
+
+    setQuestions: (questions) =>
+      set({
+        questions,
+      }),
+
+    // ==========================================
+    // ANSWER METHODS
+    // ==========================================
+
+    setAnswer: (currentAnswer) =>
+      set({
+        currentAnswer,
+      }),
+
+    addAnswer: (answer) =>
+      set((state) => ({
+        answers: [
+          ...state.answers,
+          answer,
+        ],
+      })),
+
+    // ==========================================
+    // HISTORY METHODS
+    // ==========================================
+
+    createHistoryItem: (item) => ({
+      ...item,
+      createdAt: new Date().toISOString(),
+    }),
+
+    addHistoryItem: (item) =>
+      set((state) => ({
+        history: [
+          ...state.history,
+          item,
+        ],
+      })),
+
+    updateHistoryAnswer: (index, answer) =>
+      set((state) => ({
+        history: state.history.map(
+          (item, itemIndex) =>
+            itemIndex === index
+              ? {
+                  ...item,
+                  answer,
+                }
+              : item
+        ),
+      })),
+
+    updateHistoryEvaluation: (
+      index,
+      data
+    ) =>
+      set((state) => ({
+        history: state.history.map(
+          (item, itemIndex) =>
+            itemIndex === index
+              ? {
+                  ...item,
+
+                  score:
+                    data.score ??
+                    item.score,
+
+                  strengths:
+                    data.strengths ??
+                    item.strengths,
+
+                  weaknesses:
+                    data.weaknesses ??
+                    item.weaknesses,
+
+                  feedback:
+                    data.feedback ??
+                    item.feedback,
+                }
+              : item
+        ),
+      })),
+
+    setHistory: (history) =>
+      set({
+        history,
+      }),
+
+    clearHistory: () =>
+      set({
+        history: [],
+      }),
+
+    // ==========================================
+    // NAVIGATION METHODS
+    // ==========================================
+
+    nextQuestion: () =>
+      set((state) => ({
+        currentStep: Math.min(
+          state.currentStep + 1,
+          state.totalQuestions
+        ),
+      })),
+
+    previousQuestion: () =>
+      set((state) => {
+        const newStep = Math.max(
+          state.currentStep - 1,
+          1
+        );
+
+        return {
+          currentStep: newStep,
+
+          currentQuestion:
+            state.history[newStep - 1]
+              ?.question ??
+            state.questions[newStep - 1] ??
+            "",
+
+          currentAnswer:
+            state.history[newStep - 1]
+              ?.answer ??
+            state.answers[newStep - 1] ??
+            "",
+        };
+      }),
+
+    // ==========================================
+    // LOADING METHODS
+    // ==========================================
 
     setLoading: (loading) =>
       set({
         loading,
       }),
 
-      setFeedbackLoading: (loading) =>
-  set({
-    feedbackLoading: loading,
-  }),
-
-      setSelectedSkills: (
-  skills
-) =>
-  set({
-    selectedSkills: skills,
-  }),
-
-    setQuestion: (question) =>
+    setFeedbackLoading: (feedbackLoading) =>
       set({
-        currentQuestion: question,
+        feedbackLoading,
       }),
 
-   
+    // ==========================================
+    // EVALUATION METHODS
+    // ==========================================
 
-    setAnswer: (answer) =>
-      set({
-        currentAnswer: answer,
-      }),
-
-    setDifficulty: (
-      difficulty
-    ) =>
-      set({
-        difficulty,
-      }),
-
-
-      setCategory: (
-  category
-) =>
-  set({
-    category,
-  }),
-
-    setEvaluation: (
-      data
-    ) =>
+    setEvaluation: (data) =>
       set({
         score: data.score,
-        strengths:
-          data.strengths,
-        weaknesses:
-          data.weaknesses,
-        feedback:
-          data.feedback,
+
+        strengths: data.strengths,
+
+        weaknesses: data.weaknesses,
+
+        feedback: data.feedback,
+
         improvedAnswer:
           data.improvedAnswer,
       }),
 
-      setInterviewResult: (
-  result
-) =>
-  set({
-    interviewResult: result,
-  }),
+    setCurrentOptions: (currentOptions) =>
+      set({
+        currentOptions,
+      }),
 
-    nextQuestion: () =>
-      set((state) => ({
-        currentStep:
-          state.currentStep + 1,
-      })),
+    setCorrectAnswer: (correctAnswer) =>
+      set({
+        correctAnswer,
+      }),
 
- previousQuestion: () =>
-  set((state) => {
+    setInterviewResult: (
+      interviewResult
+    ) =>
+      set({
+        interviewResult,
+      }),
 
-    const newStep =
-      Math.max(
-        state.currentStep - 1,
-        1
-      );
+    setCareerInsights: (
+      careerInsights
+    ) =>
+      set({
+        careerInsights,
+      }),
 
-    return {
-      currentStep: newStep,
+    // ==========================================
+    // INTERVIEW LIFECYCLE
+    // ==========================================
 
-      currentQuestion:
-        state.questions[
-          newStep - 1
-        ] || "",
+    startInterview: () =>
+      set({
+        interviewStarted: true,
 
-      currentAnswer:
-        state.answers[
-          newStep - 1
-        ] || "",
-    };
-  }),
+        currentStep: 1,
 
-  setLanguage: (
- language
-) =>
- set({
-   language,
- }),
- 
-  setQuestions: (
-  questions
-) =>
-  set({
-    questions,
-  }),
+        loading: false,
 
-addQuestion: (
-  question
-) =>
-  set((state) => ({
-    questions: [
-      ...state.questions,
-      question,
-    ],
-  })),
+        feedbackLoading: false,
+      }),
 
-  
+    endInterview: () =>
+      set({
+        interviewStarted: false,
 
-  clearInterviewSession: () =>
-  set({
-    currentQuestion: "",
-    currentAnswer: "",
+        loading: false,
 
-    feedbackLoading: false,
+        feedbackLoading: false,
+      }),
 
-    currentStep: 1,
+    clearInterviewSession: () =>
+      set({
+        // Current Session
+        currentQuestion: "",
 
-    questionHistory: [],
+        currentAnswer: "",
 
-    questions: [],
+        currentOptions: [],
 
-    answers: [],
+        correctAnswer: "",
 
-    interviewResult: null,
+        currentStep: 1,
 
-    loading: false,
-    
+        interviewStarted: false,
 
-  }),
+        // Legacy
+        questions: [],
 
-  setCareerInsights: (
-  insights
-) =>
-  set({
-    careerInsights: insights,
-  }),
+        answers: [],
 
+        // Enterprise History
+        history: [],
 
-  }
+        // Evaluation
+        score: 0,
 
-));
+        strengths: [],
+
+        weaknesses: [],
+
+        feedback: "",
+
+        improvedAnswer: "",
+
+        interviewResult: null,
+
+        careerInsights: null,
+
+        // Loading
+        loading: false,
+
+        feedbackLoading: false,
+      }),
+  })
+);

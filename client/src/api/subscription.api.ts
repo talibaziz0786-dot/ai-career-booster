@@ -1,27 +1,16 @@
-import axios from "axios";
-
-const API =
-  import.meta.env.VITE_API_URL ??
-  "http://localhost:5000/api";
-
-const subscriptionApi = axios.create({
-  baseURL: `${API}/subscription`,
-});
-
-subscriptionApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
-});
+import { api } from "../lib/axios";
 
 export interface SubscriptionData {
-  plan: "free" | "trial" | "pro-monthly" | "pro-yearly";
+  plan:
+    | "free"
+    | "trial"
+    | "pro-monthly"
+    | "pro-yearly";
 
-  status: "active" | "expired" | "cancelled";
+  status:
+    | "active"
+    | "expired"
+    | "cancelled";
 
   trialEnd?: string;
 
@@ -29,27 +18,31 @@ export interface SubscriptionData {
 
   usage: {
     resumeToday: number;
-
     atsToday: number;
-
     interviewToday: number;
-
     coverLetterToday: number;
-
     lastReset: string;
   };
 }
 
 export interface SubscriptionResponse {
   success: boolean;
-
   subscription: SubscriptionData;
 }
 
 export async function getSubscription() {
   const { data } =
-    await subscriptionApi.get<SubscriptionResponse>(
-      "/me"
+    await api.get<SubscriptionResponse>(
+      "/api/subscription/me"
+    );
+
+  return data;
+}
+
+export async function startTrial() {
+  const { data } =
+    await api.post(
+      "/api/subscription/trial"
     );
 
   return data;
@@ -57,8 +50,8 @@ export async function getSubscription() {
 
 export async function upgradeToMonthly() {
   const { data } =
-    await subscriptionApi.post(
-      "/upgrade",
+    await api.put(
+      "/api/subscription/upgrade",
       {
         plan: "pro-monthly",
       }
@@ -69,8 +62,8 @@ export async function upgradeToMonthly() {
 
 export async function upgradeToYearly() {
   const { data } =
-    await subscriptionApi.post(
-      "/upgrade",
+    await api.put(
+      "/api/subscription/upgrade",
       {
         plan: "pro-yearly",
       }
@@ -81,8 +74,8 @@ export async function upgradeToYearly() {
 
 export async function cancelSubscription() {
   const { data } =
-    await subscriptionApi.post(
-      "/cancel"
+    await api.put(
+      "/api/subscription/cancel"
     );
 
   return data;
@@ -90,8 +83,8 @@ export async function cancelSubscription() {
 
 export async function resetDailyUsage() {
   const { data } =
-    await subscriptionApi.post(
-      "/reset-usage"
+    await api.put(
+      "/api/subscription/reset-usage"
     );
 
   return data;

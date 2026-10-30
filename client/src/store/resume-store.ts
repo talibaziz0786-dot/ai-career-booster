@@ -26,15 +26,10 @@ export interface ResumeData {
 }
 
 export interface ResumeVersion {
-
   _id: string;
-
   title: string;
-
   version: number;
-
   updatedAt: string;
-
 }
 
 export type ResumeTemplate =
@@ -51,19 +46,21 @@ interface ResumeStore {
 
   lastSaved: number;
 
-setLastSaved: () => void;
+  aiResume: ResumeData | null;
 
-setResumeList: (
-resumes: ResumeVersion[]
-) => void;
+  setLastSaved: () => void;
+
+  setResumeList: (
+    resumes: ResumeVersion[]
+  ) => void;
 
   updateData: (
     values: Partial<ResumeData>
   ) => void;
 
   loadResume: (
-  values: Partial<ResumeData>
-) => void;
+    values: Partial<ResumeData>
+  ) => void;
 
   setTemplate: (
     template: ResumeTemplate
@@ -71,11 +68,9 @@ resumes: ResumeVersion[]
 
   resetResume: () => void;
 
-  aiResume: ResumeData | null;
-
-setAIResume: (
-  resume: ResumeData
-) => void;
+  setAIResume: (
+    resume: ResumeData
+  ) => void;
 }
 
 const initialData: ResumeData = {
@@ -95,59 +90,99 @@ const initialData: ResumeData = {
   experience: "",
   education: "",
 
+  jobTitle: "",
+
   projects: "",
   certifications: "",
   achievements: "",
   languages: "",
-
-  jobTitle: "",
 };
+
+function getInitialResumeData(): ResumeData {
+  try {
+    const saved =
+      localStorage.getItem(
+        "resume-data"
+      );
+
+    if (!saved) {
+      return initialData;
+    }
+
+    const parsed = JSON.parse(saved);
+
+    if (
+      !parsed ||
+      typeof parsed !== "object"
+    ) {
+      return initialData;
+    }
+
+    return {
+      ...initialData,
+      ...parsed,
+    };
+  } catch (error) {
+    console.error(
+      "Failed to load saved resume data:",
+      error
+    );
+
+    return initialData;
+  }
+}
+
+function getInitialTemplate(): ResumeTemplate {
+  const saved =
+    localStorage.getItem(
+      "resume-template"
+    );
+
+  if (
+    saved === "modern" ||
+    saved === "corporate" ||
+    saved === "minimal"
+  ) {
+    return saved;
+  }
+
+  return "modern";
+}
 
 export const useResumeStore =
   create<ResumeStore>((set) => ({
-    data:
-      JSON.parse(
-        localStorage.getItem(
-          "resume-data"
-        ) || "null"
-      ) || initialData,
+    data: getInitialResumeData(),
 
     selectedTemplate:
-      (localStorage.getItem(
-        "resume-template"
-      ) as ResumeTemplate) ||
-      "modern",
+      getInitialTemplate(),
 
-      aiResume: null,
+    resumeList: [],
 
-setAIResume: (resume) =>
-  set({
-    aiResume: resume,
-  }),
-
-
-  resumeList: [],
-
-setResumeList: (resumes) =>
-  set({
-    resumeList: resumes,
-  }),
-
-  lastSaved: Date.now(),
-
-setLastSaved: () =>
-  set({
     lastSaved: Date.now(),
-  }),
+
+    aiResume: null,
+
+    setAIResume: (resume) =>
+      set({
+        aiResume: resume,
+      }),
+
+    setResumeList: (resumes) =>
+      set({
+        resumeList: resumes,
+      }),
+
+    setLastSaved: () =>
+      set({
+        lastSaved: Date.now(),
+      }),
 
     updateData: (values) =>
       set((state) => {
-        const updated = {
+        const updated: ResumeData = {
           ...state.data,
           ...values,
         };
-
-   
 
         localStorage.setItem(
           "resume-data",
@@ -159,24 +194,22 @@ setLastSaved: () =>
         };
       }),
 
-           loadResume: (values) =>
-  set(() => {
-    const updated = {
-      ...initialData,
-      ...values,
-    };
+    loadResume: (values) =>
+      set(() => {
+        const updated: ResumeData = {
+          ...initialData,
+          ...values,
+        };
 
-    localStorage.setItem(
-      "resume-data",
-      JSON.stringify(updated)
-    );
+        localStorage.setItem(
+          "resume-data",
+          JSON.stringify(updated)
+        );
 
-    return {
-      data: updated,
-    };
-  }),
-
-     
+        return {
+          data: updated,
+        };
+      }),
 
     setTemplate: (template) => {
       localStorage.setItem(
@@ -185,8 +218,7 @@ setLastSaved: () =>
       );
 
       set({
-        selectedTemplate:
-          template,
+        selectedTemplate: template,
       });
     },
 
@@ -201,10 +233,8 @@ setLastSaved: () =>
 
       set({
         data: initialData,
-        selectedTemplate:
-          "modern",
+        selectedTemplate: "modern",
+        aiResume: null,
       });
     },
-
-    
   }));

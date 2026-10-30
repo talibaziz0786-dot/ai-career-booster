@@ -4,90 +4,267 @@ import type {
   NextFunction,
 } from "express";
 
-import jwt from "jsonwebtoken";
+import jwt, {
+  type JwtPayload,
+} from "jsonwebtoken";
 
-import { User }
-from "../models/user.model.js";
+import {
+  isValidObjectId,
+} from "mongoose";
 
+import User, {
+  type UserRole,
+} from "../models/user.model.js";
 
-interface JwtPayload {
-  id: string;
+/* ==========================================================
+   JWT Payload
+========================================================== */
+
+interface AccessTokenPayload
+  extends JwtPayload {
+  userId: string;
 }
 
-export interface AuthRequest extends Request {
+/* ==========================================================
+   Auth Request
+========================================================== */
+
+export interface AuthRequest
+  extends Request {
   user?: {
     id: string;
-    role?: string;
+
+    role: UserRole;
   };
 }
 
+/* ==========================================================
+   Auth Middleware
+========================================================== */
 
-export const authMiddleware =
-async (
+export async function authMiddleware(
   req: AuthRequest,
   res: Response,
   next: NextFunction
-) => {
-
+): Promise<void> {
   try {
+    /* ======================================================
+       Read Authorization Header
+    ====================================================== */
 
     const authHeader =
       req.headers.authorization;
 
     if (
-      !authHeader ||
+      typeof authHeader !==
+        "string" ||
       !authHeader.startsWith(
         "Bearer "
       )
     ) {
+      res.status(401).json({
+        success: false,
 
-      return res.status(401).json({
         message:
-          "Not authorized",
+          "Authorization token missing.",
       });
 
+      return;
     }
 
-    const token =
-      authHeader.split(" ")[1];
+    /* ======================================================
+       Extract Token
+    ====================================================== */
 
-// console.log("TOKEN:", token);
-   console.log("JWT_SECRET:", process.env.JWT_SECRET);
+    const token =
+      authHeader
+        .slice(7)
+        .trim();
+
+    if (!token) {
+      res.status(401).json({
+        success: false,
+
+        message:
+          "Authorization token missing.",
+      });
+
+      return;
+    }
+
+    /* ======================================================
+       Access Secret
+    ====================================================== */
+
+    const accessSecret =
+      process.env.JWT_ACCESS_SECRET;
+
+    if (
+      typeof accessSecret !==
+        "string" ||
+      accessSecret.trim().length < 32
+    ) {
+      console.error(
+        "JWT_ACCESS_SECRET is missing or too weak."
+      );
+
+      res.status(500).json({
+        success: false,
+
+        message:
+          "Authentication service is not configured.",
+      });
+
+      return;
+    }
+
+    /* ======================================================
+       Verify JWT
+    ====================================================== */
 
     const decoded =
-jwt.verify(
+      jwt.verify(
         token,
-        process.env.JWT_SECRET!
-      ) as JwtPayload;
+        accessSecret.trim()
+      ) as AccessTokenPayload;
 
-      // console.log("DECODED:", decoded);
+    /* ======================================================
+       Validate User ID
+    ====================================================== */
+
+    if (
+      typeof decoded.userId !==
+        "string" ||
+      decoded.userId.trim().length ===
+        0
+    ) {
+      res.status(401).json({
+        success: false,
+
+        message:
+          "Invalid authentication token.",
+      });
+
+      return;
+    }
+
+    const userId =
+      decoded.userId.trim();
+
+    /* ======================================================
+       Validate MongoDB ObjectId
+    ====================================================== */
+
+    if (
+      !isValidObjectId(
+        userId
+      )
+    ) {
+      res.status(401).json({
+        success: false,
+
+        message:
+          "Invalid authentication token.",
+      });
+
+      return;
+    }
+
+    /* ======================================================
+       Find User
+    ====================================================== */
 
     const user =
       await User.findById(
-        decoded.id
-      ).select("-password");
+        userId
+      )
+        .select(
+          "_id role"
+        )
+        .lean();
 
     if (!user) {
+      res.status(401).json({
+        success: false,
 
-      return res.status(401).json({
         message:
-          "User not found",
+          "User not found.",
       });
 
+      return;
     }
 
-    req.user = user;
+    /* ======================================================
+       Attach Authenticated User
+    ====================================================== */
+
+    req.user = {
+      id: String(
+        user._id
+      ),
+
+      role:
+        user.role,
+    };
+
+    /* ======================================================
+       Continue
+    ====================================================== */
 
     next();
-
   } catch (error) {
+    /* ======================================================
+       Expired Token
+    ====================================================== */
 
-     console.log("JWT ERROR:", error);
+    if (
+      error instanceof
+      jwt.TokenExpiredError
+    ) {
+      res.status(401).json({
+        success: false,
 
-    return res.status(401).json({
+        message:
+          "Authentication token expired.",
+      });
+
+      return;
+    }
+
+    /* ======================================================
+       Invalid JWT
+    ====================================================== */
+
+    if (
+      error instanceof
+      jwt.JsonWebTokenError
+    ) {
+      res.status(401).json({
+        success: false,
+
+        message:
+          "Invalid authentication token.",
+      });
+
+      return;
+    }
+
+    /* ======================================================
+       Unknown Error
+    ====================================================== */
+
+    console.error(
+      "Authentication middleware error:",
+      error instanceof Error
+        ? error.message
+        : "Unknown error"
+    );
+
+    res.status(500).json({
+      success: false,
+
       message:
-        "Invalid token",
+        "Authentication service error.",
     });
-
   }
-};
+}

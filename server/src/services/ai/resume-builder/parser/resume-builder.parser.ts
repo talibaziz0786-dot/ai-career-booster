@@ -1,4 +1,4 @@
-import { parseAIJson } from "../../core/ai-parser.js";
+import { parseAIJson } from "../../../../lib/ai/utils/ai-json.js";
 
 export interface ResumeBuilderResult {
   professionalSummary: string;

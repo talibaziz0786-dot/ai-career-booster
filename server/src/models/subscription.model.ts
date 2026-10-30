@@ -1,36 +1,71 @@
 import mongoose from "mongoose";
 
-const usageSchema = new mongoose.Schema(
-  {
-    resumeToday: {
-      type: Number,
-      default: 0,
-    },
+const usageSchema =
+  new mongoose.Schema(
+    {
+      resumeToday: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
 
-    atsToday: {
-      type: Number,
-      default: 0,
-    },
+      atsToday: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
 
-    interviewToday: {
-      type: Number,
-      default: 0,
-    },
+      interviewToday: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
 
-    coverLetterToday: {
-      type: Number,
-      default: 0,
-    },
+      coverLetterToday: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
 
-    lastReset: {
-      type: Date,
-      default: Date.now,
+      linkedinToday: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+
+      careerToday: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+
+      recruiterToday: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+
+      generalToday: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+
+      totalToday: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+
+      lastReset: {
+        type: Date,
+        default: Date.now,
+      },
     },
-  },
-  {
-    _id: false,
-  }
-);
+    {
+      _id: false,
+    }
+  );
 
 const subscriptionSchema =
   new mongoose.Schema(
@@ -43,6 +78,8 @@ const subscriptionSchema =
         required: true,
 
         unique: true,
+
+        index: true,
       },
 
       plan: {
@@ -56,6 +93,8 @@ const subscriptionSchema =
         ],
 
         default: "trial",
+
+        index: true,
       },
 
       status: {
@@ -91,34 +130,36 @@ const subscriptionSchema =
       },
 
       paymentMethod: {
-  type: String,
-},
+        type: String,
+      },
 
-amountPaid: {
-  type: Number,
-  default: 0,
-},
+      amountPaid: {
+        type: Number,
 
-currency: {
-  type: String,
-  default: "INR",
-},
+        default: 0,
+      },
+
+      currency: {
+        type: String,
+
+        default: "INR",
+      },
 
       razorpayOrderId: {
-  type: String,
-},
+        type: String,
+      },
 
-razorpayPaymentId: {
-  type: String,
-},
+      razorpayPaymentId: {
+        type: String,
+      },
 
-razorpaySignature: {
-  type: String,
-},
+      razorpaySignature: {
+        type: String,
+      },
 
- paymentDate: {
-  type: Date,
-},
+      paymentDate: {
+        type: Date,
+      },
 
       usage: {
         type: usageSchema,
@@ -126,12 +167,14 @@ razorpaySignature: {
         default: () => ({}),
       },
     },
+
     {
       timestamps: true,
     }
   );
 
 const Subscription =
+  mongoose.models.Subscription ||
   mongoose.model(
     "Subscription",
     subscriptionSchema
